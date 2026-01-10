@@ -1,5 +1,17 @@
 (function() {
-  const SERVER_URL = 'http://localhost:3001';
+  // Determine SERVER_URL dynamically based on the script source
+  let SERVER_URL = 'http://localhost:3001'; // Fallback
+  const scriptTag = document.currentScript || document.querySelector('script[src*="tracker/tracker.js"]');
+  
+  if (scriptTag) {
+    const src = scriptTag.src;
+    try {
+      const url = new URL(src);
+      SERVER_URL = url.origin;
+    } catch (e) {
+      console.warn('LoopeyLive: Could not parse server URL, using fallback');
+    }
+  }
 
   function initTracker() {
     if (typeof io === 'undefined') {
