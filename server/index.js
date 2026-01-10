@@ -51,6 +51,37 @@ app.get('/api/diagnose', async (req, res) => {
 // Serve Tracker script
 app.use('/tracker', express.static(path.join(__dirname, '../tracker')));
 
+// Test Tracking Endpoint
+app.get('/test-tracking/:siteId', (req, res) => {
+  const siteId = req.params.siteId;
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Teste de Rastreamento</title>
+  <style>body { font-family: sans-serif; text-align: center; padding: 50px; background: #f0f9ff; color: #0f172a; }</style>
+</head>
+<body>
+  <h1>Teste de Rastreamento Ativo</h1>
+  <p>Este é um teste interno rodando no próprio servidor.</p>
+  <p>Site ID: <strong>${siteId}</strong></p>
+  <p>Verifique seu Dashboard agora. Se aparecer "1 Usuário Ativo", seu servidor está PERFEITO.</p>
+  <div id="status">Conectando...</div>
+  
+  <script src="/tracker/tracker.js" data-site-id="${siteId}"></script>
+  <script>
+    setInterval(() => {
+      if (typeof io !== 'undefined') {
+        document.getElementById('status').innerHTML = '<span style="color:green">● Script Carregado. Enviando dados...</span>';
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
+  `;
+  res.send(html);
+});
+
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
