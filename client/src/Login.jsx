@@ -44,7 +44,8 @@ const Login = ({ onLogin }) => {
         }
       }
     } catch (err) {
-      setError(err.message);
+      console.error('Login error details:', err);
+      setError(err.message + (err.message === 'Failed to fetch' ? ' (Erro de Conexão - Verifique se o servidor está rodando)' : ''));
       setLoading(false);
     }
   };

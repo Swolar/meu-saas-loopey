@@ -17,7 +17,35 @@ app.use(express.json()); // Enable JSON parsing for API
 
 // Debug Version Endpoint
 app.get('/api/version', (req, res) => {
-  res.json({ version: '1.0.1', timestamp: Date.now(), message: 'JWT Fix Applied' });
+  res.json({ version: '1.0.2', timestamp: Date.now(), message: 'Diagnostics Added' });
+});
+
+// Diagnostic Endpoint
+app.get('/api/diagnose', async (req, res) => {
+  const diagnosis = {
+    timestamp: new Date().toISOString(),
+    env: {
+      hasSupabaseUrl: !!process.env.SUPABASE_URL,
+      hasSupabaseKey: !!process.env.SUPABASE_KEY,
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      nodeVersion: process.version
+    },
+    storageType: storage instanceof SupabaseStorage ? 'Supabase' : 'Local',
+    storageHealth: null,
+    dependencies: {
+      bcrypt: 'Loaded'
+    }
+  };
+
+  try {
+    if (storage.healthCheck) {
+      diagnosis.storageHealth = await storage.healthCheck();
+    }
+  } catch (err) {
+    diagnosis.storageHealth = { error: err.message };
+  }
+
+  res.json(diagnosis);
 });
 
 // Serve Tracker script

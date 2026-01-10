@@ -196,6 +196,39 @@ class SupabaseStorage extends Storage {
 
   async init() {
     console.log('Connected to Supabase');
+    try {
+      // Test connection and table existence
+      const { error } = await this.supabase.from('users').select('count', { count: 'exact', head: true });
+      if (error) {
+        console.error('CRITICAL: Database connection failed or "users" table missing:', error);
+      } else {
+        console.log('Database connection verified. "users" table exists.');
+      }
+    } catch (err) {
+      console.error('CRITICAL: Unexpected error connecting to Supabase:', err);
+    }
+  }
+
+  async healthCheck() {
+    const checks = {
+      supabase: false,
+      usersTable: false,
+      sitesTable: false,
+      error: null
+    };
+
+    try {
+      const { error: usersError } = await this.supabase.from('users').select('count', { count: 'exact', head: true });
+      checks.usersTable = !usersError;
+      
+      const { error: sitesError } = await this.supabase.from('sites').select('count', { count: 'exact', head: true });
+      checks.sitesTable = !sitesError;
+
+      checks.supabase = checks.usersTable && checks.sitesTable;
+    } catch (err) {
+      checks.error = err.message;
+    }
+    return checks;
   }
 
   async getSites() {
