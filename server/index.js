@@ -20,11 +20,11 @@ app.get('/health', (req, res) => {
 });
 
 // Serve React App (Production)
-// Priority 1: Check for 'public' folder in current directory (standard deployment)
-// Priority 2: Check for '../client/dist' (development structure)
-let CLIENT_BUILD_PATH = path.join(__dirname, 'public');
+// Priority 1: Check for '../client/dist' (monorepo/fresh build)
+// Priority 2: Check for 'public' folder (standalone deployment)
+let CLIENT_BUILD_PATH = path.join(__dirname, '../client/dist');
 if (!fs.existsSync(CLIENT_BUILD_PATH)) {
-    CLIENT_BUILD_PATH = path.join(__dirname, '../client/dist');
+    CLIENT_BUILD_PATH = path.join(__dirname, 'public');
 }
 
 app.use(express.static(CLIENT_BUILD_PATH));
