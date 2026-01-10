@@ -183,6 +183,7 @@ class LocalStorage extends Storage {
 }
 
 const { createClient } = require('@supabase/supabase-js');
+const bcrypt = require('bcryptjs');
 
 class SupabaseStorage extends Storage {
   constructor(url, key) {
