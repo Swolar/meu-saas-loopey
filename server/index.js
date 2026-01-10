@@ -15,6 +15,11 @@ const app = express();
 app.use(cors());
 app.use(express.json()); // Enable JSON parsing for API
 
+// Debug Version Endpoint
+app.get('/api/version', (req, res) => {
+  res.json({ version: '1.0.1', timestamp: Date.now(), message: 'JWT Fix Applied' });
+});
+
 // Serve Tracker script
 app.use('/tracker', express.static(path.join(__dirname, '../tracker')));
 
@@ -91,7 +96,8 @@ app.post('/api/login', async (req, res) => {
       res.status(401).json({ error: 'Invalid credentials' });
     }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Login Error:', err);
+    res.status(500).json({ error: 'Server Login Error: ' + err.message });
   }
 });
 
