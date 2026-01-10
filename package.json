@@ -1,0 +1,12 @@
+{
+  "name": "loopeylive-monorepo",
+  "version": "1.0.0",
+  "scripts": {
+    "postinstall": "npm install --prefix client && npm install --prefix server",
+    "build": "npm run build --prefix client",
+    "start": "node server/index.js"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
