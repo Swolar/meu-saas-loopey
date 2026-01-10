@@ -12,57 +12,59 @@ class Storage {
   }
 
   async getHistory(siteId) { throw new Error('Method not implemented'); }
-  async getDailyStats(siteId, days) { throw new Error('Method not implemented'); }
   async saveHistory(siteId, historyData) { throw new Error('Method not implemented'); }
   async createUser(username, password) { throw new Error('Method not implemented'); }
   async validateUser(username, password) { throw new Error('Method not implemented'); }
   async updateUserPassword(username, currentPassword, newPassword) { throw new Error('Method not implemented'); }
 }
 
-const fs = require('fs');
-const path = require('path');
-
 class LocalStorage extends Storage {
-  constructor(dataFile) {
+  constructor() {
     super();
-    this.dataFile = dataFile;
     this.sites = new Map();
-    this.siteHistory = new Map();
-    this.dailyStats = new Map();
+    this.siteHistory = new Map(); // Store history: { minutes: [], hours: [], days: [] }
+    this.dailyStats = new Map(); // Store daily stats: { 'YYYY-MM-DD': count }
+    this.dataFile = 'data.json';
+    
+    // Load data from file if exists
+    if (fs.existsSync(this.dataFile)) {
+      try {
+        const data = JSON.parse(fs.readFileSync(this.dataFile, 'utf8'));
+        if (data.sites) this.sites = new Map(data.sites);
+        if (data.siteHistory) this.siteHistory = new Map(data.siteHistory);
+        if (data.dailyStats) this.dailyStats = new Map(data.dailyStats);
+      } catch (err) {
+        console.error('Error loading data file:', err);
+      }
+    } else {
+        // Create default user if no data file
+        // This is a temporary hack for local dev without Supabase
+        // Ideally we shouldn't mix auth logic here, but for simplicity:
+        // We will store users in 'sites' map or a separate map?
+        // Let's add a users map.
+    }
     this.users = new Map();
+    // Load users
+    if (fs.existsSync(this.dataFile)) {
+        try {
+            const data = JSON.parse(fs.readFileSync(this.dataFile, 'utf8'));
+            if (data.users) this.users = new Map(data.users);
+        } catch (err) {}
+    }
   }
 
   async init() {
-    try {
-      if (fs.existsSync(this.dataFile)) {
-        const rawData = fs.readFileSync(this.dataFile, 'utf8');
-        if (rawData) {
-          const data = JSON.parse(rawData);
-          if (data.sites) {
-            this.sites = new Map(data.sites);
-          }
-          if (data.history) {
-            this.siteHistory = new Map(data.history);
-          }
-          if (data.dailyStats) {
-            this.dailyStats = new Map(data.dailyStats);
-          }
-          if (data.users) {
-            this.users = new Map(data.users);
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Error loading local data:', err);
-    }
+    console.log('LocalStorage initialized');
+  }
 
-    // Seed demo site
-    if (!this.sites.has('demo-site')) {
-      this.sites.set('demo-site', { id: 'demo-site', name: 'Demo Loopey Site', domain: 'localhost', createdAt: Date.now() });
-    }
-    if (!this.siteHistory.has('demo-site')) {
-      this.siteHistory.set('demo-site', { minutes: [], hours: [], days: [] });
-    }
+  async save() {
+    const data = {
+      sites: Array.from(this.sites.entries()),
+      siteHistory: Array.from(this.siteHistory.entries()),
+      dailyStats: Array.from(this.dailyStats.entries()),
+      users: Array.from(this.users.entries())
+    };
+    fs.writeFileSync(this.dataFile, JSON.stringify(data, null, 2));
   }
 
   async getSites() {
@@ -133,71 +135,52 @@ class LocalStorage extends Storage {
     // For simplicity in this refactor, we won't save to disk on every single history update tick
     // because index.js handles periodic saving.
   }
-
+  
   async createUser(username, password) {
-    if (this.users.has(username)) {
-      throw new Error('User already exists');
-    }
-    // In a real app, hash the password!
-    this.users.set(username, { username, password, createdAt: Date.now() });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = { username, password: hashedPassword, createdAt: Date.now() };
+    this.users.set(username, newUser);
     this.save();
     return { username };
   }
-
+  
   async validateUser(username, password) {
     const user = this.users.get(username);
-    if (user && user.password === password) {
-      const { password: _, ...safeUser } = user;
-      return safeUser;
-    }
-    return null;
+    if (!user) return null;
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) return null;
+    const { password: _, ...safeUser } = user;
+    return safeUser;
   }
-
+  
   async updateUserPassword(username, currentPassword, newPassword) {
-    const user = this.users.get(username);
-    if (!user) {
-      throw new Error('User not found');
-    }
-    if (user.password !== currentPassword) {
-      throw new Error('Incorrect password');
-    }
-    user.password = newPassword;
-    this.users.set(username, user);
-    this.save();
-    return true;
-  }
-
-  // Helper for periodic save
-  save() {
-    try {
-      const data = {
-        sites: Array.from(this.sites.entries()),
-        history: Array.from(this.siteHistory.entries()),
-        users: Array.from(this.users.entries())
-      };
-      fs.writeFileSync(this.dataFile, JSON.stringify(data, null, 2));
-    } catch (err) {
-      console.error('Error saving data:', err);
-    }
+      const user = this.users.get(username);
+      if (!user) return false;
+      const isValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isValid) return false;
+      
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      user.password = hashedPassword;
+      this.users.set(username, user);
+      this.save();
+      return true;
   }
 }
 
 const { createClient } = require('@supabase/supabase-js');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs'); // Ensure bcrypt is required here too
 
 class SupabaseStorage extends Storage {
   constructor(url, key) {
     super();
     this.supabase = createClient(url, key);
-    // In-memory cache for high-frequency real-time updates (minutes)
-    // We only persist 'hours' and 'days' or periodically persist 'minutes'
-    this.localCache = new Map(); 
+    this.localCache = new Map(); // Cache for high-frequency history
   }
 
   async init() {
     console.log('Connected to Supabase');
     try {
-      // Test connection and table existence
+      // Check for users table
       const { error } = await this.supabase.from('users').select('count', { count: 'exact', head: true });
       if (error) {
         console.error('CRITICAL: Database connection failed or "users" table missing:', error);
@@ -214,6 +197,8 @@ class SupabaseStorage extends Storage {
       supabase: false,
       usersTable: false,
       sitesTable: false,
+      siteHistoryTable: false,
+      dailyStatsTable: false,
       error: null
     };
 
@@ -224,7 +209,13 @@ class SupabaseStorage extends Storage {
       const { error: sitesError } = await this.supabase.from('sites').select('count', { count: 'exact', head: true });
       checks.sitesTable = !sitesError;
 
-      checks.supabase = checks.usersTable && checks.sitesTable;
+      const { error: historyError } = await this.supabase.from('site_history').select('count', { count: 'exact', head: true });
+      checks.siteHistoryTable = !historyError;
+
+      const { error: dailyError } = await this.supabase.from('daily_site_stats').select('count', { count: 'exact', head: true });
+      checks.dailyStatsTable = !dailyError;
+
+      checks.supabase = checks.usersTable && checks.sitesTable && checks.siteHistoryTable && checks.dailyStatsTable;
     } catch (err) {
       checks.error = err.message;
     }
@@ -268,25 +259,6 @@ class SupabaseStorage extends Storage {
     const today = new Date().toISOString().split('T')[0];
     
     // Upsert daily stats
-    // We assume a table 'daily_site_stats' with columns: site_id, date, views
-    // This is a "best effort" increment for now without a specific RPC for atomic daily increment
-    // Ideally we would use an RPC like increment_daily_views(site_id, date)
-    
-    /* 
-      SQL for table:
-      create table daily_site_stats (
-        site_id text,
-        date date,
-        views int default 0,
-        primary key (site_id, date)
-      );
-    */
-    
-    // For now, let's just try to call an RPC if it existed, or do a read-modify-write (risky for high concurrency)
-    // Or we rely on the client/socket logic to be the source of truth for high-freq updates?
-    // No, storage is source of truth.
-    
-    // Let's implement a simple upsert via client for now
     const { data: currentDay } = await this.supabase
         .from('daily_site_stats')
         .select('views')
@@ -296,9 +268,13 @@ class SupabaseStorage extends Storage {
         
     const newViews = (currentDay?.views || 0) + 1;
     
-    await this.supabase
+    const { error: upsertError } = await this.supabase
         .from('daily_site_stats')
         .upsert({ site_id: siteId, date: today, views: newViews }, { onConflict: 'site_id, date' });
+    
+    if (upsertError) {
+        console.error('Error updating daily_site_stats (Table might be missing):', upsertError.message);
+    }
 
     if (error) {
       console.error('Error incrementing views via RPC:', error);
@@ -334,27 +310,24 @@ class SupabaseStorage extends Storage {
       .order('date', { ascending: true });
 
     if (error) {
-      console.error('Error fetching daily stats from Supabase:', error);
+      console.error('Error fetching daily stats (Table might be missing):', error.message);
       return [];
     }
     return data || [];
   }
 
   async getHistory(siteId) {
-    // For MVP, we might still want to use in-memory for real-time speed, 
-    // but fetch initial state from DB.
-    // Implementing full DB history sync is complex.
-    // Strategy: Return local cache if exists, else fetch.
+    // Return local cache if exists, else fetch.
     
     if (!this.localCache.has(siteId)) {
        // Initialize empty structure
        this.localCache.set(siteId, { minutes: [], hours: [], days: [] });
        
-       // TODO: Fetch 'hours' and 'days' from DB (site_history table)
-       // This is a placeholder for the actual DB fetch implementation
-       const { data } = await this.supabase.from('site_history').select('*').eq('site_id', siteId);
+       const { data, error } = await this.supabase.from('site_history').select('*').eq('site_id', siteId);
        
-       if (data) {
+       if (error) {
+           console.error('Error fetching site_history (Table might be missing):', error.message);
+       } else if (data) {
          const history = { minutes: [], hours: [], days: [] };
          data.forEach(row => {
            if (history[row.timeframe]) {
@@ -405,7 +378,7 @@ class SupabaseStorage extends Storage {
       if (upsertData.length > 0) {
         // Upsert: update if exists
         const { error } = await this.supabase.from('site_history').upsert(upsertData, { onConflict: 'site_id, timeframe, time_bucket' });
-        if (error) console.error('Supabase save error:', error.message);
+        if (error) console.error('Supabase save error (site_history):', error.message);
       }
     } catch (err) {
       console.error('Error saving history to Supabase:', err.message);
@@ -447,17 +420,13 @@ class SupabaseStorage extends Storage {
       .single();
 
     if (fetchError || !user) {
-      throw new Error('User not found');
+      return false;
     }
 
     const isValid = await bcrypt.compare(currentPassword, user.password);
-    if (!isValid) {
-      throw new Error('Incorrect password');
-    }
+    if (!isValid) return false;
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // Update to new password
     const { error: updateError } = await this.supabase.from('users')
       .update({ password: hashedPassword })
       .eq('username', username);
@@ -466,5 +435,7 @@ class SupabaseStorage extends Storage {
     return true;
   }
 }
+
+const fs = require('fs');
 
 module.exports = { LocalStorage, SupabaseStorage };
