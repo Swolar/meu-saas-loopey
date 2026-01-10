@@ -7,6 +7,9 @@ const fs = require('fs');
 
 const { LocalStorage, SupabaseStorage } = require('./storage');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key_123';
 
 const app = express();
 app.use(cors());
