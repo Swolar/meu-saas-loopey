@@ -350,32 +350,41 @@ function Dashboard({ user, onLogout }) {
   const displayHistory = stats?.history || [];
 
   const renderWidgetContent = (id) => {
+    const summary = stats?.summary || {
+        users: stats?.totalOnline || 0,
+        usersLabel: 'Usuários Ativos',
+        usersBadge: 'Ao Vivo',
+        avgTime: stats?.averageDuration || 0,
+        mobile: stats?.devices?.mobile || 0,
+        desktop: stats?.devices?.desktop || 0
+    };
+
     switch (id) {
       case 'active_users':
         return <StatCard 
-          title="Usuários Ativos" 
-          value={stats?.totalOnline || 0} 
+          title={summary.usersLabel} 
+          value={summary.users} 
           icon={Users} 
-          footer={<span className="trend-up">● Ao Vivo</span>} 
+          footer={<span className="trend-up">● {summary.usersBadge}</span>} 
         />;
       case 'avg_time':
         return <StatCard 
           title="Tempo Médio" 
-          value={`${stats?.averageDuration || 0}s`} 
+          value={`${summary.avgTime}s`} 
           icon={Clock} 
           footer={<span><span className="trend-up">↑ 12%</span> vs média anterior</span>} 
         />;
       case 'mobile':
         return <StatCard 
           title="Mobile" 
-          value={stats?.devices?.mobile || 0} 
+          value={summary.mobile} 
           icon={Smartphone} 
           footer="Usuários em celulares" 
         />;
       case 'desktop':
         return <StatCard 
           title="Desktop" 
-          value={stats?.devices?.desktop || 0} 
+          value={summary.desktop} 
           icon={Monitor} 
           footer="Usuários em PC" 
         />;

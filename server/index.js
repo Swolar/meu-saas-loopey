@@ -355,13 +355,42 @@ async function getStats(siteId, timeframe = 'minutes') {
     history = safeHistoryData.days || [];
   }
 
+  // Calculate Summary based on Timeframe
+  let summary = {
+      users: totalOnline,
+      usersLabel: 'Usuários Ativos',
+      usersBadge: 'Ao Vivo',
+      avgTime: averageDuration,
+      mobile: deviceCounts.mobile,
+      desktop: deviceCounts.desktop
+  };
+
+  if (timeframe === 'days') {
+      summary.usersLabel = 'Visitas (7 Dias)';
+      summary.usersBadge = 'Total';
+      try {
+          // Fetch daily stats for last 7 days
+          console.log(`Fetching daily stats for site ${siteId} (days view)`);
+          const dailyStats = await storage.getDailyStats(siteId, 7);
+          console.log('Daily stats result:', dailyStats);
+          
+          const totalVisits = dailyStats.reduce((sum, day) => sum + (day.views || 0), 0);
+          
+          // If total visits < current active users (e.g. fresh DB), use active users as floor
+          summary.users = Math.max(totalVisits, totalOnline);
+      } catch (err) {
+          console.error('Error fetching summary stats:', err);
+      }
+  }
+
   return {
     totalOnline,
     topPages,
     averageDuration,
     devices: deviceCounts,
     history,
-    totalViews: site ? (site.total_views || site.totalViews || 0) : 0
+    totalViews: site ? (site.total_views || site.totalViews || 0) : 0,
+    summary
   };
 }
 
