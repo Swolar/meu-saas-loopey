@@ -358,85 +358,108 @@ app.get('*', (req, res) => {
 
 // Helper to calculate stats for a specific site
 async function getStats(siteId, timeframe = 'minutes') {
-  const now = Date.now();
-  let totalOnline = 0;
-  let totalDuration = 0;
-  const pageCounts = {};
-  const deviceCounts = { desktop: 0, mobile: 0 };
+  try {
+    const now = Date.now();
+    let totalOnline = 0;
+    let totalDuration = 0;
+    const pageCounts = {};
+    const deviceCounts = { desktop: 0, mobile: 0 };
 
-  // Filter sessions by siteId
-  activeSessions.forEach((session) => {
-    if (session.siteId === siteId) {
-      totalOnline++;
-      
-      const url = session.url || 'unknown';
-      pageCounts[url] = (pageCounts[url] || 0) + 1;
-      
-      // Simple device detection
-      const isMobile = /mobile|android|iphone|ipad|ipod/i.test(session.userAgent || '');
-      if (isMobile) deviceCounts.mobile++;
-      else deviceCounts.desktop++;
+    // Filter sessions by siteId
+    activeSessions.forEach((session) => {
+      if (session.siteId === siteId) {
+        totalOnline++;
+        
+        const url = session.url || 'unknown';
+        pageCounts[url] = (pageCounts[url] || 0) + 1;
+        
+        // Simple device detection
+        const isMobile = /mobile|android|iphone|ipad|ipod/i.test(session.userAgent || '');
+        if (isMobile) deviceCounts.mobile++;
+        else deviceCounts.desktop++;
 
-      totalDuration += (now - session.joinedAt);
-    }
-  });
-
-  const topPages = Object.entries(pageCounts)
-    .map(([url, count]) => ({ url, count }))
-    .sort((a, b) => b.count - a.count);
-
-  const averageDuration = totalOnline > 0 ? Math.floor((totalDuration / totalOnline) / 1000) : 0;
-
-  // Get history based on timeframe
-  const safeHistoryData = await storage.getHistory(siteId);
-  const site = await storage.getSite(siteId);
-  
-  let history = [];
-  if (timeframe === 'minutes') {
-    history = safeHistoryData.minutes || [];
-  } else if (timeframe === 'hours') {
-    history = safeHistoryData.hours || [];
-  } else if (timeframe === 'days') {
-    history = safeHistoryData.days || [];
-  }
-
-  // Calculate Summary based on Timeframe
-  let summary = {
-      users: totalOnline,
-      usersLabel: 'Usuários Ativos',
-      usersBadge: 'Ao Vivo',
-      avgTime: averageDuration,
-      mobile: deviceCounts.mobile,
-      desktop: deviceCounts.desktop
-  };
-
-  if (timeframe === 'days') {
-      summary.usersLabel = 'Visitas (7 Dias)';
-      summary.usersBadge = 'Total';
-      try {
-          // Fetch daily stats for last 7 days
-          console.log(`Fetching daily stats for site ${siteId} (days view)`);
-          const dailyStats = await storage.getDailyStats(siteId, 7);
-          console.log('Daily stats result:', dailyStats);
-          
-          const totalVisits = dailyStats.reduce((sum, day) => sum + (day.views || 0), 0);
-          
-          // If total visits < current active users (e.g. fresh DB), use active users as floor
-          summary.users = Math.max(totalVisits, totalOnline);
-      } catch (err) {
-          console.error('Error fetching summary stats:', err);
+        totalDuration += (now - session.joinedAt);
       }
-  }
+    });
 
-  return {
-    totalOnline,
-    topPages,
-    averageDuration,
-    devices: deviceCounts,
-    history,
-    totalViews: site ? (site.total_views || site.totalViews || 0) : 0,
-    summary
-  };
+    const topPages = Object.entries(pageCounts)
+      .map(([url, count]) => ({ url, count }))
+      .sort((a, b) => b.count - a.count);
+
+    const averageDuration = totalOnline > 0 ? Math.floor((totalDuration / totalOnline) / 1000) : 0;
+
+    // Get history based on timeframe
+    let safeHistoryData = { minutes: [], hours: [], days: [] };
+    try {
+        const data = await storage.getHistory(siteId);
+        if (data) safeHistoryData = data;
+    } catch (e) {
+        console.warn(`Failed to load history for site ${siteId}:`, e.message);
+    }
+
+    let site = null;
+    try {
+        site = await storage.getSite(siteId);
+    } catch (e) {
+        console.warn(`Failed to load site info for ${siteId}:`, e.message);
+    }
+    
+    let history = [];
+    if (timeframe === 'minutes') {
+      history = safeHistoryData.minutes || [];
+    } else if (timeframe === 'hours') {
+      history = safeHistoryData.hours || [];
+    } else if (timeframe === 'days') {
+      history = safeHistoryData.days || [];
+    }
+
+    // Calculate Summary based on Timeframe
+    let summary = {
+        users: totalOnline,
+        usersLabel: 'Usuários Ativos',
+        usersBadge: 'Ao Vivo',
+        avgTime: averageDuration,
+        mobile: deviceCounts.mobile,
+        desktop: deviceCounts.desktop
+    };
+
+    if (timeframe === 'days') {
+        summary.usersLabel = 'Visitas (7 Dias)';
+        summary.usersBadge = 'Total';
+        try {
+            // Fetch daily stats for last 7 days
+            const dailyStats = await storage.getDailyStats(siteId, 7);
+            const totalVisits = dailyStats.reduce((sum, day) => sum + (day.views || 0), 0);
+            
+            // If total visits < current active users (e.g. fresh DB), use active users as floor
+            summary.users = Math.max(totalVisits, totalOnline);
+        } catch (err) {
+            console.error('Error fetching summary stats:', err);
+        }
+    }
+
+    return {
+      totalOnline,
+      topPages,
+      averageDuration,
+      devices: deviceCounts,
+      history,
+      totalViews: site ? (site.total_views || site.totalViews || 0) : 0,
+      summary
+    };
+  } catch (criticalError) {
+      console.error('CRITICAL ERROR in getStats:', criticalError);
+      // Return safe fallback to prevent crash
+      return {
+          totalOnline: 0,
+          topPages: [],
+          averageDuration: 0,
+          devices: { desktop: 0, mobile: 0 },
+          history: [],
+          totalViews: 0,
+          summary: { users: 0, usersLabel: 'Erro', usersBadge: 'Erro', avgTime: 0, mobile: 0, desktop: 0 }
+      };
+  }
 }
 
 // Update history periodically
