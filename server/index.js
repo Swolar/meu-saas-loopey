@@ -533,14 +533,17 @@ io.on('connection', (socket) => {
   // --- Tracker Events ---
   
   socket.on('join', (data) => {
-    const { siteId, url, referrer, userAgent } = data;
+    let { siteId, url, referrer, userAgent } = data;
     
     if (!siteId) {
       console.log('Join attempt without siteId');
       return;
     }
 
-    console.log(`User joined site ${siteId}: ${url}`);
+    // Robustness
+    siteId = String(siteId).trim();
+
+    console.log(`User joined site ${siteId}: ${url} (Socket: ${socket.id})`);
     
     // Store session
     activeSessions.set(socket.id, {
@@ -586,6 +589,9 @@ io.on('connection', (socket) => {
 
   // Dashboard client says: "I want to watch stats for site X"
   socket.on('monitor_site', async ({ siteId, timeframe }) => {
+    if (!siteId) return;
+    siteId = String(siteId).trim();
+    
     const tf = timeframe || 'minutes';
     console.log(`Socket ${socket.id} monitoring site ${siteId} (${tf})`);
     
