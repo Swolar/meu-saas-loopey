@@ -10,6 +10,10 @@ RUN npm ci
 COPY client/ ./
 RUN npm run build
 
+# --- TRACKER SETUP ---
+WORKDIR /app/tracker
+COPY tracker/ ./
+
 # --- SERVER SETUP ---
 WORKDIR /app/server
 COPY server/package*.json ./
