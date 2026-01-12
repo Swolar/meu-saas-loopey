@@ -18,11 +18,14 @@
     }
 
     // Force production URL if running on a domain but script detected localhost (proxy/forwarding edge case)
+    /* 
     if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
         if (SERVER_URL.indexOf('localhost') !== -1) {
-             SERVER_URL = 'https://loopeyviews.pro';
+             // REMOVED HARDCODED DOMAIN TO SUPPORT SELF-HOSTING
+             // SERVER_URL = 'https://loopeyviews.pro';
         }
     }
+    */
 
     console.log('[LoopeyLive] Initializing. Server:', SERVER_URL);
 
@@ -63,6 +66,7 @@
         siteId = String(siteId).trim();
 
         console.log('[LoopeyLive] Site ID:', siteId);
+        console.log('[LoopeyLive] Connecting to Socket.IO at:', SERVER_URL);
 
         var socket = io(SERVER_URL, {
             reconnection: true,
