@@ -50,9 +50,14 @@ app.get('/api/diagnose', async (req, res) => {
 
 // Serve Tracker script (renamed to script.js to avoid blockers)
 app.get('/script.js', (req, res) => {
+    console.log('Serving /script.js');
     res.sendFile(path.join(__dirname, '../tracker/script.js'));
 });
-// Fallback for old tracker URL
+// Fallback for old tracker URL (BACKWARD COMPATIBILITY)
+app.get('/tracker/tracker.js', (req, res) => {
+    console.log('Serving /tracker/tracker.js (fallback)');
+    res.sendFile(path.join(__dirname, '../tracker/script.js'));
+});
 app.use('/tracker', express.static(path.join(__dirname, '../tracker')));
 
 // Test Tracking Endpoint
