@@ -48,7 +48,11 @@ app.get('/api/diagnose', async (req, res) => {
   res.json(diagnosis);
 });
 
-// Serve Tracker script
+// Serve Tracker script (renamed to script.js to avoid blockers)
+app.get('/script.js', (req, res) => {
+    res.sendFile(path.join(__dirname, '../tracker/script.js'));
+});
+// Fallback for old tracker URL
 app.use('/tracker', express.static(path.join(__dirname, '../tracker')));
 
 // Test Tracking Endpoint
@@ -93,7 +97,7 @@ app.get('/test-tracking/:siteId', (req, res) => {
   </div>
   
   <!-- O Tracker agora carrega o socket.io automaticamente se necessário -->
-  <script src="/tracker/tracker.js" data-site-id="${siteId}"></script>
+  <script src="/script.js" data-site-id="${siteId}"></script>
   
   <script>
     const statusDiv = document.getElementById('status');
