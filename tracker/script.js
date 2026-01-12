@@ -3,7 +3,7 @@
 
     // 1. Determine Server URL
     var SERVER_URL = 'http://localhost:3001';
-    var scriptTag = document.currentScript || document.querySelector('script[src*="tracker.js"]');
+    var scriptTag = document.currentScript || document.querySelector('script[src*="script.js"]') || document.querySelector('script[src*="tracker.js"]');
 
     if (scriptTag) {
         try {
@@ -58,6 +58,9 @@
         if (siteId === 'default') {
             console.warn('[LoopeyLive] No site ID provided. Add data-site-id="..." to script tag.');
         }
+
+        // Robustness: Ensure siteId is a string and trimmed
+        siteId = String(siteId).trim();
 
         console.log('[LoopeyLive] Site ID:', siteId);
 

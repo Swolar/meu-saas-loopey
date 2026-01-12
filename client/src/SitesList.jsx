@@ -118,10 +118,10 @@ function SitesList({ onSitesUpdate }) {
         </p>
         <div style={{ background: '#1a1d27', padding: '1rem', borderRadius: '4px', position: 'relative' }}>
           <code style={{ color: '#a5b4fc', wordBreak: 'break-all' }}>
-            &lt;script src="{window.location.origin}/tracker/tracker.js" data-site-id="<span style={{ color: '#f59e0b' }}>SEU_ID_DO_SITE</span>"&gt;&lt;/script&gt;
+            &lt;script src="{window.location.origin}/script.js" data-site-id="<span style={{ color: '#f59e0b' }}>SEU_ID_DO_SITE</span>"&gt;&lt;/script&gt;
           </code>
           <button 
-            onClick={() => copyToClipboard(`<script src="${window.location.origin}/tracker/tracker.js" data-site-id="SEU_ID_DO_SITE"></script>`)}
+            onClick={() => copyToClipboard(`<script src="${window.location.origin}/script.js" data-site-id="SEU_ID_DO_SITE"></script>`)}
             style={{ 
               position: 'absolute', 
               right: '10px', 
@@ -231,7 +231,7 @@ function SitesList({ onSitesUpdate }) {
               <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button 
-                    onClick={() => copyToClipboard(`<script src="http://localhost:3001/tracker/tracker.js" data-site-id="${site.id}"></script>`)}
+                    onClick={() => copyToClipboard(`<script src="${window.location.origin}/script.js" data-site-id="${site.id}"></script>`)}
                     style={{ 
                       background: 'none', 
                       border: 'none', 

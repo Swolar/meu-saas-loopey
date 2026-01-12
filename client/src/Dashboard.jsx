@@ -73,6 +73,7 @@ function Dashboard({ user, onLogout }) {
     cpf: '',
     phone: ''
   });
+  const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
     if (themeMode === 'light') {
@@ -523,11 +524,14 @@ function Dashboard({ user, onLogout }) {
           </div>
         </nav>
 
-        <div style={{ marginTop: siteId ? '0' : 'auto', padding: '1rem', background: '#1a1d27', borderRadius: '8px' }}>
+        <div style={{ marginTop: siteId ? '0' : 'auto', padding: '1rem', background: '#1a1d27', borderRadius: '8px', cursor: 'pointer' }} onClick={() => setShowDebug(!showDebug)}>
           <div style={{ fontSize: '0.85rem', color: '#9ca3af', marginBottom: '0.5rem' }}>Status do Sistema</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: isConnected || !siteId ? '#10b981' : '#ef4444', fontSize: '0.9rem', fontWeight: '500' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'currentColor' }}></span>
             {siteId ? (isConnected ? 'Conectado' : 'Desconectado') : 'Online'}
+          </div>
+          <div style={{ fontSize: '0.7rem', color: '#4b5563', marginTop: '0.5rem' }}>
+             v1.0.2 {showDebug ? '(Debug On)' : ''}
           </div>
         </div>
       </aside>
@@ -1215,6 +1219,30 @@ function Dashboard({ user, onLogout }) {
 
         </div>
       </main>
+      {showDebug && (
+        <div style={{
+          position: 'fixed', bottom: '20px', right: '20px', width: '300px',
+          background: 'rgba(0,0,0,0.9)', color: '#0f0', padding: '15px',
+          borderRadius: '8px', zIndex: 9999, fontFamily: 'monospace', fontSize: '12px',
+          border: '1px solid #333'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <strong>DEBUG INFO</strong>
+            <button onClick={() => setShowDebug(false)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}>X</button>
+          </div>
+          <div>Socket Connected: {isConnected ? 'YES' : 'NO'}</div>
+          <div>Socket ID: {socket?.id || 'N/A'}</div>
+          <div>Site ID: {siteId}</div>
+          <div>Timeframe: {timeframe}</div>
+          <div>Last Updated: {lastUpdated.toLocaleTimeString()}</div>
+          <div style={{ marginTop: '10px', borderTop: '1px solid #333', paddingTop: '5px' }}>
+            <strong>Raw Stats:</strong>
+            <pre style={{ maxHeight: '200px', overflow: 'auto' }}>
+              {JSON.stringify(stats, null, 2)}
+            </pre>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
