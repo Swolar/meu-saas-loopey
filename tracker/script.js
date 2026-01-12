@@ -1,114 +1,155 @@
 (function() {
-    // LoopeyLive Tracker - v1.2.0 (Clean & Robust)
+    // LoopeyLive Tracker - v2.0.0 (Self-Hosted Edition)
+    // Completely rewritten to guarantee connection for self-hosted instances.
 
-    // 1. Determine Server URL
-    var SERVER_URL = 'http://localhost:3001';
-    var scriptTag = document.currentScript || document.querySelector('script[src*="script.js"]') || document.querySelector('script[src*="tracker.js"]');
+    var scriptTag = document.currentScript || 
+                    document.querySelector('script[src*="script.js"]') || 
+                    document.querySelector('script[src*="tracker.js"]');
 
-    if (scriptTag) {
+    var SERVER_URL = '';
+
+    // 1. Robust Server URL Detection
+    // For self-hosted, the script is almost always served from the same domain as the tracker server.
+    if (scriptTag && scriptTag.src) {
         try {
-            var src = scriptTag.src;
-            if (src && src.indexOf('http') === 0) {
-                var urlObj = new URL(src);
-                SERVER_URL = urlObj.origin;
-            }
+            var urlObj = new URL(scriptTag.src);
+            SERVER_URL = urlObj.origin; // e.g., "https://analytics.mydomain.com"
+            console.log('[LoopeyLive] Detected Server URL from script tag:', SERVER_URL);
         } catch (e) {
-            console.warn('[LoopeyLive] URL detection failed, using default.');
+            console.error('[LoopeyLive] Error parsing script URL:', e);
         }
     }
 
-    // Force production URL if running on a domain but script detected localhost (proxy/forwarding edge case)
-    /* 
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        if (SERVER_URL.indexOf('localhost') !== -1) {
-             // REMOVED HARDCODED DOMAIN TO SUPPORT SELF-HOSTING
-             // SERVER_URL = 'https://loopeyviews.pro';
-        }
+    // Fallback: If detection fails, use the site's own origin if it matches typical dev setup,
+    // otherwise warn the user.
+    if (!SERVER_URL) {
+        console.warn('[LoopeyLive] Could not detect server URL. Defaulting to script origin if possible.');
+        // This is risky if script is inline, but we only support external script loading.
     }
-    */
 
-    console.log('[LoopeyLive] Initializing. Server:', SERVER_URL);
+    var SITE_ID = 'default';
+    if (scriptTag) {
+        SITE_ID = scriptTag.getAttribute('data-site-id') || 'default';
+    }
+    
+    // Ensure SITE_ID is clean
+    SITE_ID = String(SITE_ID).trim();
 
-    // 2. Load Socket.IO
-    function loadSocketIO(callback) {
+    if (SITE_ID === 'default') {
+        console.warn('[LoopeyLive] Warning: No data-site-id provided. Tracking may not be attributed correctly.');
+    }
+
+    console.log('[LoopeyLive] Initializing for Site ID:', SITE_ID);
+
+    // 2. Load Socket.IO Client
+    // Strategy: Prefer loading from the tracking server itself to avoid CDN issues and version mismatches.
+    
+    function loadSocketAndConnect() {
         if (typeof io !== 'undefined') {
-            callback();
+            connectSocket();
             return;
         }
 
-        console.log('[LoopeyLive] Loading Socket.IO...');
+        // Try loading from the server first
+        var serverSocketScript = SERVER_URL + '/socket.io/socket.io.js';
+        console.log('[LoopeyLive] Loading Socket.IO from:', serverSocketScript);
+
         var script = document.createElement('script');
-        script.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
+        script.src = serverSocketScript;
         script.onload = function() {
-            console.log('[LoopeyLive] Socket.IO loaded successfully');
-            callback();
+            console.log('[LoopeyLive] Socket.IO loaded from server.');
+            connectSocket();
         };
         script.onerror = function() {
-            console.error('[LoopeyLive] Failed to load Socket.IO from CDN');
+            console.warn('[LoopeyLive] Failed to load Socket.IO from server. Trying CDN fallback...');
+            loadFromCDN();
         };
         document.head.appendChild(script);
     }
 
-    // 3. Start Tracking
-    function startTracking() {
-        var siteId = 'default';
-        if (scriptTag) {
-            siteId = scriptTag.getAttribute('data-site-id') || 'default';
-        } else if (window.LOOPEY_SITE_ID) {
-            siteId = window.LOOPEY_SITE_ID;
+    function loadFromCDN() {
+        var cdnScript = document.createElement('script');
+        cdnScript.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
+        cdnScript.onload = function() {
+            console.log('[LoopeyLive] Socket.IO loaded from CDN.');
+            connectSocket();
+        };
+        cdnScript.onerror = function() {
+            console.error('[LoopeyLive] CRITICAL: Failed to load Socket.IO from both server and CDN. Tracking disabled.');
+        };
+        document.head.appendChild(cdnScript);
+    }
+
+    // 3. Connection Logic
+    function connectSocket() {
+        if (typeof io === 'undefined') {
+            console.error('[LoopeyLive] socket.io is undefined even after load attempt.');
+            return;
         }
 
-        if (siteId === 'default') {
-            console.warn('[LoopeyLive] No site ID provided. Add data-site-id="..." to script tag.');
-        }
+        console.log('[LoopeyLive] Connecting to Socket.IO server at:', SERVER_URL);
 
-        // Robustness: Ensure siteId is a string and trimmed
-        siteId = String(siteId).trim();
-
-        console.log('[LoopeyLive] Site ID:', siteId);
-        console.log('[LoopeyLive] Connecting to Socket.IO at:', SERVER_URL);
-
-        var socket = io(SERVER_URL, {
+        // Options optimized for reliability
+        var socketOptions = {
             reconnection: true,
-            transports: ['websocket', 'polling']
-        });
+            reconnectionAttempts: 10,
+            reconnectionDelay: 1000,
+            transports: ['polling', 'websocket'], // Start with polling (most robust), upgrade to websocket
+            path: '/socket.io' // Standard path
+        };
 
-        function getPageData() {
-            return {
-                siteId: siteId,
-                url: window.location.pathname + window.location.search,
-                referrer: document.referrer,
-                userAgent: navigator.userAgent
-            };
-        }
+        var socket = io(SERVER_URL, socketOptions);
 
         socket.on('connect', function() {
-            console.log('[LoopeyLive] Connected via', socket.io.engine.transport.name);
-            socket.emit('join', getPageData());
+            console.log('[LoopeyLive] ✅ Connected! Socket ID:', socket.id);
+            sendPageView(socket);
+        });
+
+        socket.on('connect_error', function(err) {
+            console.error('[LoopeyLive] ❌ Connection Error:', err.message);
         });
 
         socket.on('disconnect', function(reason) {
             console.log('[LoopeyLive] Disconnected:', reason);
         });
 
-        socket.on('connect_error', function(error) {
-            console.error('[LoopeyLive] Connection error:', error);
-        });
-
+        // Setup History API hooks for SPA support
+        setupHistoryHooks(socket);
+        
         // Heartbeat
         setInterval(function() {
             if (socket.connected) {
                 socket.emit('heartbeat');
             }
         }, 5000);
+    }
 
-        // History API Support (SPA)
+    function getPageData() {
+        return {
+            siteId: SITE_ID,
+            url: window.location.href, // Send full URL including query params
+            referrer: document.referrer,
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString()
+        };
+    }
+
+    function sendPageView(socket) {
+        if (!socket.connected) return;
+        var data = getPageData();
+        console.log('[LoopeyLive] Sending page view:', data);
+        socket.emit('join', data);
+    }
+
+    function setupHistoryHooks(socket) {
         var lastUrl = window.location.href;
+        
         function checkUrlChange() {
             var currentUrl = window.location.href;
             if (currentUrl !== lastUrl) {
                 lastUrl = currentUrl;
-                socket.emit('page_view', getPageData());
+                console.log('[LoopeyLive] URL changed (SPA). Sending update.');
+                sendPageView(socket);
             }
         }
 
@@ -117,16 +158,21 @@
             originalPushState.apply(this, arguments);
             checkUrlChange();
         };
+
+        var originalReplaceState = history.replaceState;
+        history.replaceState = function() {
+            originalReplaceState.apply(this, arguments);
+            checkUrlChange();
+        };
+
         window.addEventListener('popstate', checkUrlChange);
     }
 
-    // Boot
+    // Start
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        loadSocketIO(startTracking);
+        loadSocketAndConnect();
     } else {
-        window.addEventListener('DOMContentLoaded', function() {
-            loadSocketIO(startTracking);
-        });
+        window.addEventListener('DOMContentLoaded', loadSocketAndConnect);
     }
 
 })();
