@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LoopeyLive Local Test</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .log { background: #f0f0f0; padding: 10px; border-radius: 5px; font-family: monospace; height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>LoopeyLive Local Tracking Test</h1>
+    <p>This page simulates an external site loading the tracker.</p>
+    <div id="logs" class="log"></div>
+
+    <script>
+        // Override console.log to show on screen
+        const logDiv = document.getElementById('logs');
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        function appendLog(type, args) {
+            const msg = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : a)).join(' ');
+            const div = document.createElement('div');
+            div.textContent = `[${type}] ${msg}`;
+            div.style.color = type === 'ERROR' ? 'red' : (type === 'WARN' ? 'orange' : 'black');
+            logDiv.appendChild(div);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        console.log = function() { appendLog('INFO', Array.from(arguments)); originalLog.apply(console, arguments); };
+        console.error = function() { appendLog('ERROR', Array.from(arguments)); originalError.apply(console, arguments); };
+        console.warn = function() { appendLog('WARN', Array.from(arguments)); originalWarn.apply(console, arguments); };
+    </script>
+
+    <!-- LOAD TRACKER FROM LOCAL SERVER -->
+    <script src="http://localhost:3001/script.js" data-site-id="test-site-local"></script>
+
+</body>
+</html>
