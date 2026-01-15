@@ -349,6 +349,23 @@ app.put('/api/sites/:id/theme', authenticateToken, async (req, res) => {
   }
 });
 
+// Update site slugs
+app.put('/api/sites/:id/slugs', authenticateToken, async (req, res) => {
+  const { slugs } = req.body;
+  if (!Array.isArray(slugs)) return res.status(400).json({ error: 'Slugs must be an array' });
+  
+  try {
+    const updatedSite = await storage.updateSiteSlugs(req.params.id, slugs);
+    if (updatedSite) {
+      res.json(updatedSite);
+    } else {
+      res.status(404).json({ error: 'Site not found' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Handle React Routing, return all requests to React app
 app.get('*', (req, res) => {
   // If request is for API, don't return index.html (should have been handled above)

@@ -119,6 +119,17 @@ class LocalStorage extends Storage {
     return null;
   }
 
+  async updateSiteSlugs(siteId, slugs) {
+    const site = this.sites.get(siteId);
+    if (site) {
+      site.slugs = Array.isArray(slugs) ? slugs : [];
+      this.sites.set(siteId, site);
+      this.save();
+      return site;
+    }
+    return null;
+  }
+
   async getHistory(siteId) {
     let history = this.siteHistory.get(siteId);
     if (!history || Array.isArray(history)) {
@@ -291,6 +302,18 @@ class SupabaseStorage extends Storage {
     const { data, error } = await this.supabase
       .from('sites')
       .update({ theme_color: color })
+      .eq('id', siteId)
+      .select()
+      .single();
+      
+    if (error) throw error;
+    return data;
+  }
+
+  async updateSiteSlugs(siteId, slugs) {
+    const { data, error } = await this.supabase
+      .from('sites')
+      .update({ slugs: Array.isArray(slugs) ? slugs : [] })
       .eq('id', siteId)
       .select()
       .single();

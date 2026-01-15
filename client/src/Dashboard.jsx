@@ -85,6 +85,17 @@ function Dashboard({ user, onLogout }) {
     localStorage.setItem('theme_mode', themeMode);
   }, [themeMode]);
 
+  // Load slugs when entering config tab
+  const [editingSlugs, setEditingSlugs] = useState([]);
+  useEffect(() => {
+    if (settingsTab === 'config' && siteId) {
+       const currentSite = sites.find(s => String(s.id) === String(siteId));
+       if (currentSite) {
+         setEditingSlugs(currentSite.slugs || []);
+       }
+    }
+  }, [settingsTab, siteId, sites]);
+
   // Layout State
   const [layout, setLayout] = useState(DEFAULT_LAYOUT);
   const [isEditingLayout, setIsEditingLayout] = useState(false);
@@ -184,8 +195,9 @@ function Dashboard({ user, onLogout }) {
     });
     updateLayoutState(newLayout);
   };
-
+  
   const CHART_COLORS = [themeColor, '#10b981', '#f59e0b', '#ef4444'];
+  const currentSite = siteId ? sites.find(s => String(s.id) === String(siteId)) : null;
 
   const fetchSites = () => {
     authFetch('/api/sites')
@@ -221,7 +233,7 @@ function Dashboard({ user, onLogout }) {
         })
         .catch(err => console.error('Error fetching site details:', err));
       
-      if (viewMode !== 'reports' && viewMode !== 'settings') {
+      if (viewMode !== 'reports' && viewMode !== 'settings' && viewMode !== 'instructions') {
          setViewMode('stats');
       }
     }
@@ -331,7 +343,7 @@ function Dashboard({ user, onLogout }) {
 
   const handleManualUpdate = () => {
     if (socket && siteId) {
-      socket.emit('monitor_site', { siteId, timeframe });
+      socket.emit('monitor_site', { siteId, timeframe, slug: selectedSlug });
       setLastUpdated(new Date());
     } else if (!siteId) {
       fetchSites();
@@ -462,22 +474,118 @@ function Dashboard({ user, onLogout }) {
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            {sites.map(site => (
-              <Link 
-                key={site.id}
-                to={`/dashboard/${site.id}`}
-                className={`nav-item ${site.id === siteId ? 'active' : ''}`}
-                style={{ 
-                  justifyContent: 'flex-start',
-                  paddingLeft: '1rem',
-                  background: site.id === siteId ? hexToRgba(themeColor, 0.1) : 'transparent',
-                  color: site.id === siteId ? themeColor : '#9ca3af'
-                }}
-              >
-                <Globe size={16} />
-                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '0.9rem' }}>{site.name}</span>
-              </Link>
-            ))}
+            {sites.map(site => {
+              // Ensure we are comparing strings to strings or numbers to numbers properly
+              // siteId comes from URL (string), site.id might be number or string
+              const isActiveSite = String(siteId) === String(site.id);
+              
+              return (
+              <div key={site.id}>
+                <Link 
+                  to={`/dashboard/${site.id}`}
+                  onClick={() => {
+                    if (isActiveSite) {
+                        setViewMode('stats');
+                        setSelectedSlug(null);
+                    }
+                  }}
+                  className={`nav-item ${isActiveSite ? 'active' : ''}`}
+                  style={{ 
+                    justifyContent: 'flex-start',
+                    paddingLeft: '1rem',
+                    background: isActiveSite ? hexToRgba(themeColor, 0.1) : 'transparent',
+                    color: isActiveSite ? themeColor : '#9ca3af',
+                    marginBottom: isActiveSite ? '0.25rem' : '0'
+                  }}
+                >
+                  <Globe size={16} />
+                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '0.9rem' }}>{site.name}</span>
+                </Link>
+
+                {isActiveSite && (
+                  <div style={{ marginLeft: '1rem', borderLeft: `1px solid ${hexToRgba(themeColor, 0.2)}`, paddingLeft: '0.5rem', marginTop: '0.25rem', marginBottom: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    {/* 1. Resumo */}
+                    <div 
+                      onClick={() => { setSelectedSlug(null); setViewMode('stats'); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        padding: '0.4rem 0.5rem', borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        color: (!selectedSlug && viewMode === 'stats') ? themeColor : '#9ca3af',
+                        background: (!selectedSlug && viewMode === 'stats') ? hexToRgba(themeColor, 0.1) : 'transparent',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <BarChart2 size={14} />
+                      <span>Resumo</span>
+                    </div>
+
+                    {/* 2. Slugs (Expandable or list) */}
+                    {(site.slugs || []).length > 0 && (
+                        <div style={{ marginTop: '0.25rem', marginBottom: '0.25rem' }}>
+                            <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem', paddingLeft: '0.5rem', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                                Slugs
+                            </div>
+                            {(site.slugs || []).map(slug => (
+                                <div 
+                                    key={slug}
+                                    onClick={() => { setSelectedSlug(slug); setViewMode('stats'); }}
+                                    style={{
+                                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                                        padding: '0.3rem 0.5rem', borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '0.85rem',
+                                        color: (selectedSlug === slug && viewMode === 'stats') ? themeColor : '#9ca3af',
+                                        background: (selectedSlug === slug && viewMode === 'stats') ? hexToRgba(themeColor, 0.1) : 'transparent',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    <Layers size={14} />
+                                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>/{slug}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* 3. Relatórios */}
+                    <div 
+                      onClick={() => { setViewMode('reports'); setSelectedSlug(null); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        padding: '0.4rem 0.5rem', borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        color: viewMode === 'reports' ? themeColor : '#9ca3af',
+                        background: viewMode === 'reports' ? hexToRgba(themeColor, 0.1) : 'transparent',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <FileText size={14} />
+                      <span>Relatórios</span>
+                    </div>
+
+                    {/* 4. Instruções */}
+                    <div 
+                      onClick={() => { setViewMode('instructions'); setSelectedSlug(null); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        padding: '0.4rem 0.5rem', borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        color: viewMode === 'instructions' ? themeColor : '#9ca3af',
+                        background: viewMode === 'instructions' ? hexToRgba(themeColor, 0.1) : 'transparent',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <BookOpen size={14} />
+                      <span>Instruções</span>
+                    </div>
+
+                  </div>
+                )}
+              </div>
+            );})}
           </div>
 
           <div style={{ marginTop: 'auto' }}>
@@ -585,6 +693,7 @@ function Dashboard({ user, onLogout }) {
                         { id: 'messages', label: 'Mensagens', icon: MessageSquare },
                         { id: 'security', label: 'Segurança', icon: Shield },
                         { id: 'appearance', label: 'Aparência', icon: Palette },
+                        ...(siteId ? [{ id: 'config', label: 'Configurações do Site', icon: Layers }] : [])
                     ].map(tab => (
                         <div 
                             key={tab.id}
@@ -697,6 +806,146 @@ function Dashboard({ user, onLogout }) {
                                 <Check size={18} />
                                 Salvar Alterações
                             </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Site Config Tab */}
+                {settingsTab === 'config' && (
+                    <div className="card">
+                        <div className="card-header">
+                            <h3 className="card-title" style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>Configurações do Site</h3>
+                            <Layers size={20} color={themeColor} />
+                        </div>
+                        
+                        <div style={{ marginTop: '1.5rem' }}>
+                            <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '6px' }}>
+                                <div style={{ display: 'flex', gap: '0.5rem', color: '#3b82f6', fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                                    <BookOpen size={16} /> O que são Slugs?
+                                </div>
+                                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                                    Slugs são identificadores de páginas específicas do seu funil (ex: <code>/obrigado</code>, <code>/upsell</code>). 
+                                    Adicione-os aqui para que apareçam como abas no menu lateral, permitindo filtrar as estatísticas apenas para aquela página.
+                                </p>
+                            </div>
+
+                            <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Etapas do Funil (Slugs)</label>
+                            
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                {editingSlugs.map((slug, index) => (
+                                    <div key={index} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                        <div style={{ 
+                                            background: '#2a2e3b', 
+                                            padding: '0.5rem 0.75rem', 
+                                            borderRadius: '4px 0 0 4px', 
+                                            border: '1px solid var(--border-color)',
+                                            borderRight: 'none',
+                                            color: '#9ca3af',
+                                            fontSize: '0.9rem'
+                                        }}>/</div>
+                                        <input
+                                            type="text"
+                                            value={slug}
+                                            onChange={(e) => {
+                                                const next = [...editingSlugs];
+                                                next[index] = e.target.value.replace(/^\//, ''); // Remove leading slash if typed
+                                                setEditingSlugs(next);
+                                            }}
+                                            placeholder="ex: obrigado"
+                                            style={{ 
+                                                flex: 1, 
+                                                padding: '0.5rem', 
+                                                borderRadius: '0 4px 4px 0', 
+                                                border: '1px solid var(--border-color)', 
+                                                background: 'var(--bg-dark)', 
+                                                color: 'var(--text-primary)' 
+                                            }}
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                const next = editingSlugs.filter((_, i) => i !== index);
+                                                setEditingSlugs(next);
+                                            }}
+                                            style={{
+                                                background: 'rgba(239, 68, 68, 0.1)',
+                                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                                color: '#ef4444',
+                                                padding: '0.5rem',
+                                                borderRadius: '4px',
+                                                cursor: 'pointer',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                            }}
+                                            title="Remover Slug"
+                                        >
+                                            <LogOut size={16} style={{ transform: 'rotate(180deg)' }} /> 
+                                        </button>
+                                    </div>
+                                ))}
+                                
+                                <button
+                                    onClick={() => setEditingSlugs([...editingSlugs, ''])}
+                                    style={{
+                                        alignSelf: 'flex-start',
+                                        background: 'transparent',
+                                        border: '1px dashed var(--border-color)',
+                                        color: themeColor,
+                                        padding: '0.5rem 1rem',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '0.85rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem',
+                                        marginTop: '0.5rem'
+                                    }}
+                                >
+                                    <Layers size={14} /> + Adicionar Etapa
+                                </button>
+                            </div>
+
+                            <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
+                                <button 
+                                    onClick={() => {
+                                        // Filter empty slugs
+                                        const cleanSlugs = editingSlugs.filter(s => s && s.trim().length > 0);
+                                        
+                                        authFetch(`/api/sites/${siteId}/slugs`, {
+                                            method: 'PUT',
+                                            body: JSON.stringify({ slugs: cleanSlugs })
+                                        })
+                                        .then(res => res.json())
+                                        .then(updatedSite => {
+                                            if (updatedSite.error) {
+                                                alert('Erro ao salvar: ' + updatedSite.error);
+                                            } else {
+                                                setSites(prev => prev.map(s => s.id === siteId ? { ...s, slugs: cleanSlugs } : s));
+                                                setEditingSlugs(cleanSlugs);
+                                                alert('Slugs atualizados com sucesso!');
+                                            }
+                                        })
+                                        .catch(err => {
+                                            console.error(err);
+                                            alert('Erro ao conectar com o servidor.');
+                                        });
+                                    }}
+                                    style={{ 
+                                        backgroundColor: themeColor,
+                                        border: `1px solid ${themeColor}`,
+                                        color: 'white',
+                                        padding: '0.75rem 1.5rem',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        fontWeight: '500',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    <Check size={18} />
+                                    Salvar Configurações
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -909,6 +1158,77 @@ function Dashboard({ user, onLogout }) {
                     </div>
                 )}
             </div>
+          ) : viewMode === 'instructions' ? (
+            <div style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Instruções de Instalação</h2>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Guia passo a passo para configurar o rastreador no seu site.</p>
+                
+                <div className="card">
+                    <div className="card-header">
+                        <h3 className="card-title" style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>Script de Rastreamento</h3>
+                        <BookOpen size={20} color={themeColor} />
+                    </div>
+                    <div style={{ marginTop: '1rem' }}>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', lineHeight: '1.6' }}>
+                            Para começar a monitorar seus visitantes, adicione o seguinte código dentro da tag 
+                            <code style={{ background: 'rgba(255,255,255,0.1)', padding: '0.2rem 0.4rem', borderRadius: '4px', margin: '0 0.3rem', color: '#f59e0b' }}>&lt;head&gt;</code> 
+                            do seu site:
+                        </p>
+                        
+                        <div style={{ position: 'relative', background: '#0f1115', padding: '1.5rem', borderRadius: '8px', border: '1px solid #2a2e3b', overflowX: 'auto' }}>
+                            <code style={{ fontFamily: 'monospace', color: '#a5b4fc' }}>
+                                &lt;script src="{getApiUrl().replace('/api', '')}/script.js" data-site-id="{siteId}"&gt;&lt;/script&gt;
+                            </code>
+                            <button 
+                                onClick={() => {
+                                    navigator.clipboard.writeText(`<script src="${getApiUrl().replace('/api', '')}/script.js" data-site-id="${siteId}"></script>`);
+                                    alert('Código copiado!');
+                                }}
+                                style={{
+                                    position: 'absolute',
+                                    top: '10px',
+                                    right: '10px',
+                                    background: '#374151',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '0.4rem 0.8rem',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontSize: '0.8rem',
+                                    fontWeight: '500'
+                                }}
+                            >
+                                Copiar
+                            </button>
+                        </div>
+                        
+                        <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '6px' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem', color: '#10b981', fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                                <Check size={16} /> Verificação
+                            </div>
+                            <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                                Após instalar o código, acesse seu site e verifique se o status no painel muda para "Conectado". O rastreamento inicia automaticamente.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="card" style={{ marginTop: '1.5rem' }}>
+                    <div className="card-header">
+                        <h3 className="card-title" style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>Configuração de Slugs (Funis)</h3>
+                        <Layers size={20} color={themeColor} />
+                    </div>
+                    <div style={{ marginTop: '1rem' }}>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', lineHeight: '1.6' }}>
+                            O sistema detecta automaticamente as páginas visitadas. Para organizar melhor seus funis, você pode cadastrar Slugs específicos nas configurações do site ou filtrar diretamente pelo menu lateral.
+                        </p>
+                        <ul style={{ paddingLeft: '1.5rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+                            <li style={{ marginBottom: '0.5rem' }}>Navegue até a aba <strong>Resumo</strong> para ver dados de todo o domínio.</li>
+                            <li style={{ marginBottom: '0.5rem' }}>Clique em um <strong>Slug</strong> específico na barra lateral para filtrar estatísticas apenas daquela página.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
           ) : viewMode === 'reports' ? (
             <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -1110,10 +1430,83 @@ function Dashboard({ user, onLogout }) {
                         >
                         <option value="minutes">TEMPO REAL</option>
                         <option value="hours">ÚLTIMAS 24H</option>
-                        <option value="days">ÚLTIMOS 7 DIAS</option>
-                        </select>
-                    </div>
-                  </div>
+                         <option value="days">ÚLTIMOS 7 DIAS</option>
+                         </select>
+                     </div>
+                   </div>
+               )}
+
+              {!isEditingLayout && currentSite && Array.isArray(currentSite.slugs) && currentSite.slugs.length > 0 && (
+                <div
+                  style={{
+                    marginTop: '1rem',
+                    marginBottom: '1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    flexWrap: 'wrap'
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      color: '#6b7280',
+                      textTransform: 'uppercase',
+                      fontWeight: 'bold',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    Etapas do Funil
+                  </span>
+
+                  <button
+                    onClick={() => setSelectedSlug(null)}
+                    style={{
+                      padding: '0.35rem 0.9rem',
+                      borderRadius: '999px',
+                      border: '1px solid ' + (selectedSlug ? '#374151' : themeColor),
+                      background: selectedSlug ? 'transparent' : hexToRgba(themeColor, 0.15),
+                      color: selectedSlug ? '#9ca3af' : themeColor,
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      transition: 'all 0.15s'
+                    }}
+                  >
+                    <BarChart2 size={14} />
+                    Todas (Resumo)
+                  </button>
+
+                  {currentSite.slugs.map((slug) => (
+                    <button
+                      key={slug}
+                      onClick={() => {
+                        setSelectedSlug(slug);
+                        if (viewMode !== 'stats') {
+                          setViewMode('stats');
+                        }
+                      }}
+                      style={{
+                        padding: '0.35rem 0.9rem',
+                        borderRadius: '999px',
+                        border: '1px solid ' + (selectedSlug === slug ? themeColor : '#374151'),
+                        background: selectedSlug === slug ? hexToRgba(themeColor, 0.15) : 'transparent',
+                        color: selectedSlug === slug ? themeColor : '#9ca3af',
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        transition: 'all 0.15s'
+                      }}
+                    >
+                      <Layers size={14} />
+                      /{slug}
+                    </button>
+                  ))}
+                </div>
               )}
 
               {/* Hidden Widgets List */}
