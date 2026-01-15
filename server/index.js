@@ -17,7 +17,7 @@ app.use(express.json()); // Enable JSON parsing for API
 
 // Debug Version Endpoint
 app.get('/api/version', (req, res) => {
-  res.json({ version: '1.0.2', timestamp: Date.now(), message: 'Diagnostics Added' });
+  res.json({ version: '1.0.3', timestamp: Date.now(), message: 'Diagnostics Added + SPA Fallback' });
 });
 
 // Diagnostic Endpoint

@@ -41,6 +41,10 @@ const DEFAULT_LAYOUT = [
 ];
 
 function Dashboard({ user, onLogout }) {
+  useEffect(() => {
+    console.log("LoopeyLive Dashboard v1.0.3 loaded");
+  }, []);
+
   const { siteId } = useParams();
   const navigate = useNavigate();
   const [stats, setStats] = useState({
