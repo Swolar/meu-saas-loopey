@@ -8,6 +8,7 @@ create table if not exists sites (
   domain text not null,
   total_views integer default 0,
   theme_color text default '#006fee',
+   slugs jsonb default '[]'::jsonb,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 

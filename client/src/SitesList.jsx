@@ -9,6 +9,7 @@ function SitesList({ onSitesUpdate }) {
   const [sites, setSites] = useState([]);
   const [newSiteName, setNewSiteName] = useState('');
   const [newSiteDomain, setNewSiteDomain] = useState('');
+  const [newSiteSlugs, setNewSiteSlugs] = useState(['']);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -44,10 +45,11 @@ function SitesList({ onSitesUpdate }) {
   const handleCreateSite = async (e) => {
     e.preventDefault();
     setError(null);
+    const slugs = newSiteSlugs.map(s => s.trim()).filter(Boolean);
     try {
       const response = await authFetch('/api/sites', {
         method: 'POST',
-        body: JSON.stringify({ name: newSiteName, domain: newSiteDomain }),
+        body: JSON.stringify({ name: newSiteName, domain: newSiteDomain, slugs }),
       });
       
       if (!response.ok) {
@@ -59,6 +61,7 @@ function SitesList({ onSitesUpdate }) {
       setSites([...sites, newSite]);
       setNewSiteName('');
       setNewSiteDomain('');
+      setNewSiteSlugs(['']);
       
       // Atualizar sidebar e redirecionar
       if (onSitesUpdate) onSitesUpdate();
@@ -145,7 +148,7 @@ function SitesList({ onSitesUpdate }) {
       </div>
 
       <div className="card" style={{ marginBottom: '2rem' }}>
-        <h3>Adicionar Novo Site</h3>
+        <h3>Criar Dashboard</h3>
         {error && (
           <div style={{ 
             backgroundColor: 'rgba(239, 68, 68, 0.1)', 
@@ -162,8 +165,8 @@ function SitesList({ onSitesUpdate }) {
             <span>{error}</span>
           </div>
         )}
-        <form onSubmit={handleCreateSite} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '200px' }}>
+        <form onSubmit={handleCreateSite} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: '220px' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem' }}>Nome do Site</label>
             <input
               type="text"
@@ -174,7 +177,7 @@ function SitesList({ onSitesUpdate }) {
               style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
             />
           </div>
-          <div style={{ flex: 1, minWidth: '200px' }}>
+          <div style={{ flex: 1, minWidth: '220px' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem' }}>Domínio</label>
             <input
               type="text"
@@ -184,6 +187,62 @@ function SitesList({ onSitesUpdate }) {
               required
               style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
             />
+          </div>
+          <div style={{ flex: 1, minWidth: '220px' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Etapas do Funil (Slugs)</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {newSiteSlugs.map((slug, index) => (
+                <div key={index} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', color: '#666', width: '56px' }}>
+                    Etapa {index + 1}
+                  </span>
+                  <input
+                    type="text"
+                    value={slug}
+                    onChange={(e) => {
+                      const next = [...newSiteSlugs];
+                      next[index] = e.target.value;
+                      setNewSiteSlugs(next);
+                    }}
+                    placeholder="ex: obrigado, upsell-1"
+                    style={{ flex: 1, padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  {newSiteSlugs.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = newSiteSlugs.filter((_, i) => i !== index);
+                        setNewSiteSlugs(next.length ? next : ['']);
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#ef4444',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem'
+                      }}
+                    >
+                      Remover
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setNewSiteSlugs([...newSiteSlugs, ''])}
+                style={{
+                  marginTop: '0.25rem',
+                  background: 'none',
+                  border: 'none',
+                  color: '#10b981',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  textAlign: 'left'
+                }}
+              >
+                + Adicionar slug
+              </button>
+            </div>
           </div>
           <button 
             type="submit"
@@ -212,7 +271,12 @@ function SitesList({ onSitesUpdate }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                 <div>
                   <h3>{site.name}</h3>
-                  <p style={{ color: '#666', marginBottom: '0.5rem' }}>{site.domain}</p>
+                  <p style={{ color: '#666', marginBottom: '0.25rem' }}>{site.domain}</p>
+                  {Array.isArray(site.slugs) && site.slugs.length > 0 && (
+                    <p style={{ color: '#4b5563', fontSize: '0.8rem' }}>
+                      Slugs: {site.slugs.join(', ')}
+                    </p>
+                  )}
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <span style={{ 

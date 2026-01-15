@@ -268,13 +268,14 @@ app.get('/api/sites', authenticateToken, async (req, res) => {
 
 // Create new site
 app.post('/api/sites', authenticateToken, async (req, res) => {
-  const { name, domain } = req.body;
+  const { name, domain, slugs } = req.body;
   const id = Math.random().toString(36).substring(2, 10); // Simple ID gen
   
   const newSite = {
     id,
     name,
     domain,
+    slugs: Array.isArray(slugs) ? slugs : [],
     createdAt: Date.now()
   };
   

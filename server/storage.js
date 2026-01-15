@@ -239,6 +239,7 @@ class SupabaseStorage extends Storage {
       id: site.id,
       name: site.name,
       domain: site.domain,
+      slugs: Array.isArray(site.slugs) ? site.slugs : [],
       created_at: new Date(site.createdAt).toISOString()
     }]);
     
