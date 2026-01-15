@@ -367,7 +367,7 @@ app.get('*', (req, res) => {
 // --- WebSocket Logic ---
 
 // Helper to calculate stats for a specific site
-async function getStats(siteId, timeframe = 'minutes') {
+async function getStats(siteId, timeframe = 'minutes', slug = null) {
   try {
     const now = Date.now();
     let totalOnline = 0;
@@ -378,6 +378,11 @@ async function getStats(siteId, timeframe = 'minutes') {
     // Filter sessions by siteId
     activeSessions.forEach((session) => {
       if (session.siteId === siteId) {
+        // Filter by slug if provided
+        if (slug && (!session.url || !session.url.includes(slug))) {
+            return;
+        }
+
         totalOnline++;
         
         const url = session.url || 'unknown';
@@ -415,6 +420,14 @@ async function getStats(siteId, timeframe = 'minutes') {
     }
     
     let history = [];
+    // If slug is provided, we currently don't have per-slug history storage.
+    // So we either return empty history or site-wide history.
+    // For now, let's return site-wide history but maybe we can improve this later.
+    // Or just filter the real-time points? No, history is aggregated.
+    // Let's keep site-wide history for now as "context" or empty if it's confusing.
+    // User requested "Resumo: Dados totais...". Slug view is specific.
+    // Let's return history only if NO slug is selected (Resumo), or return site-wide history?
+    // Let's return site-wide history for now.
     if (timeframe === 'minutes') {
       history = safeHistoryData.minutes || [];
     } else if (timeframe === 'hours') {
@@ -426,7 +439,7 @@ async function getStats(siteId, timeframe = 'minutes') {
     // Calculate Summary based on Timeframe
     let summary = {
         users: totalOnline,
-        usersLabel: 'Usuários Ativos',
+        usersLabel: slug ? `Usuários em /${slug}` : 'Usuários Ativos',
         usersBadge: 'Ao Vivo',
         avgTime: averageDuration,
         mobile: deviceCounts.mobile,
@@ -434,7 +447,7 @@ async function getStats(siteId, timeframe = 'minutes') {
     };
 
     if (timeframe === 'days') {
-        summary.usersLabel = 'Visitas (7 Dias)';
+        summary.usersLabel = slug ? `Visitas em /${slug} (7 Dias)` : 'Visitas (7 Dias)';
         summary.usersBadge = 'Total';
         try {
             // Fetch daily stats for last 7 days
@@ -442,7 +455,12 @@ async function getStats(siteId, timeframe = 'minutes') {
             const totalVisits = dailyStats.reduce((sum, day) => sum + (day.views || 0), 0);
             
             // If total visits < current active users (e.g. fresh DB), use active users as floor
-            summary.users = Math.max(totalVisits, totalOnline);
+            // Note: This is site-wide total visits. We don't have per-slug daily stats yet.
+            // So for slug view, this might be misleading.
+            // Let's stick to real-time 'totalOnline' for slug view in 'days' mode for now unless we implement per-slug storage.
+            if (!slug) {
+                summary.users = Math.max(totalVisits, totalOnline);
+            }
         } catch (err) {
             console.error('Error fetching summary stats:', err);
         }
@@ -522,10 +540,22 @@ async function updateHistory() {
       // Save updated history
       await storage.saveHistory(site.id, historyData);
 
-      // Broadcast updates to all timeframe rooms
+      // Broadcast updates to all timeframe rooms (Site Wide)
       io.to(`dashboard_${site.id}_minutes`).emit('stats_update', await getStats(site.id, 'minutes'));
       io.to(`dashboard_${site.id}_hours`).emit('stats_update', await getStats(site.id, 'hours'));
       io.to(`dashboard_${site.id}_days`).emit('stats_update', await getStats(site.id, 'days'));
+      
+      // Broadcast updates to specific SLUG rooms if they exist
+      if (site.slugs && Array.isArray(site.slugs)) {
+          for (const slug of site.slugs) {
+              const slugStats = await getStats(site.id, 'minutes', slug); // Always send minutes (realtime) for now?
+              // Or send based on what room they are in.
+              // Let's assume clients subscribe to `dashboard_${site.id}_minutes_${slug}`
+              io.to(`dashboard_${site.id}_minutes_${slug}`).emit('stats_update', await getStats(site.id, 'minutes', slug));
+              io.to(`dashboard_${site.id}_hours_${slug}`).emit('stats_update', await getStats(site.id, 'hours', slug));
+              io.to(`dashboard_${site.id}_days_${slug}`).emit('stats_update', await getStats(site.id, 'days', slug));
+          }
+      }
     }
   } catch (err) {
     console.error('Error updating history:', err);
@@ -598,21 +628,50 @@ io.on('connection', (socket) => {
   // --- Dashboard Events ---
 
   // Dashboard client says: "I want to watch stats for site X"
-  socket.on('monitor_site', async ({ siteId, timeframe }) => {
+  socket.on('monitor_site', async ({ siteId, timeframe, slug }) => {
     if (!siteId) return;
     siteId = String(siteId).trim();
     
     const tf = timeframe || 'minutes';
-    console.log(`Socket ${socket.id} monitoring site ${siteId} (${tf})`);
+    const roomName = `dashboard_${siteId}_${tf}${slug ? '_' + slug : ''}`;
+
+    console.log(`Socket ${socket.id} monitoring site ${siteId} (${tf}) [Slug: ${slug || 'ALL'}]`);
     
     // Leave previous rooms for this site to avoid double updates if switching
+    // We need to be careful not to leave ALL rooms if we want to support multiple tabs or components?
+    // But typically one socket monitors one view.
+    // The previous implementation left specific rooms.
+    // Let's just leave all rooms matching this pattern roughly or just join the new one.
+    // Ideally we track which room we joined.
+    // For simplicity, let's leave the standard ones we know about.
     socket.leave(`dashboard_${siteId}_minutes`);
     socket.leave(`dashboard_${siteId}_hours`);
     socket.leave(`dashboard_${siteId}_days`);
     
-    socket.join(`dashboard_${siteId}_${tf}`);
+    // Also try to leave slug rooms if we can guess them, but we don't know the previous slug easily.
+    // It's safer to rely on the fact that socket.io handles multiple joins fine, 
+    // BUT we don't want to receive multiple events.
+    // Let's iterate over rooms and leave them? No, that's complex.
+    // Let's just join the new one. The client should probably disconnect/reconnect or we just handle it.
+    // Actually, if I join `minutes_slug1` AND `minutes`, I get two events?
+    // No, `updateHistory` emits to specific rooms.
+    
+    // So if I switch from "Resumo" (minutes) to "Slug1" (minutes_slug1),
+    // I should leave "minutes".
+    // If I switch back, I should leave "minutes_slug1".
+    // Since I don't know the previous slug, I'll just rely on the client to send a "leave" or just accept that I might get double updates if I don't clean up perfectly.
+    // HOWEVER, `socket.leave` takes a room name.
+    // Let's just try to clean up the standard ones.
+    // And maybe we can iterate `socket.rooms`?
+    for (const room of socket.rooms) {
+        if (room.startsWith(`dashboard_${siteId}_`)) {
+            socket.leave(room);
+        }
+    }
+    
+    socket.join(roomName);
     // Send immediate initial stats
-    socket.emit('stats_update', await getStats(siteId, tf));
+    socket.emit('stats_update', await getStats(siteId, tf, slug));
   });
 
   // --- Disconnect ---

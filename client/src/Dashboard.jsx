@@ -8,7 +8,7 @@ import {
   Users, Clock, Smartphone, Monitor,
   Maximize2, Minimize2,
   User, Shield, MessageSquare, Moon, Sun, Lock,
-  FileText
+  FileText, BookOpen, Layers, BarChart2
 } from 'lucide-react';
 import SitesList from './SitesList';
 import { StatCard, TrafficChart, DeviceChart, TopPagesTable } from './DashboardWidgets';
@@ -53,6 +53,7 @@ function Dashboard({ user, onLogout }) {
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [timeframe, setTimeframe] = useState('minutes');
+  const [selectedSlug, setSelectedSlug] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [sites, setSites] = useState([]);
   const [viewMode, setViewMode] = useState('stats');
@@ -311,7 +312,7 @@ function Dashboard({ user, onLogout }) {
 
     newSocket.on('connect', () => {
       setIsConnected(true);
-      newSocket.emit('monitor_site', { siteId, timeframe });
+      newSocket.emit('monitor_site', { siteId, timeframe, slug: selectedSlug });
     });
 
     newSocket.on('stats_update', (data) => {
@@ -320,7 +321,7 @@ function Dashboard({ user, onLogout }) {
     });
 
     return () => newSocket.close();
-  }, [siteId, timeframe]);
+  }, [siteId, timeframe, selectedSlug]);
   
   useEffect(() => {
     if (siteId && viewMode === 'reports') {
@@ -480,21 +481,6 @@ function Dashboard({ user, onLogout }) {
           </div>
 
           <div style={{ marginTop: 'auto' }}>
-            <div 
-                className={`nav-item ${viewMode === 'reports' ? 'active' : ''}`}
-                onClick={() => siteId && setViewMode('reports')}
-                style={{
-                    cursor: siteId ? 'pointer' : 'not-allowed',
-                    opacity: siteId ? 1 : 0.5,
-                    background: viewMode === 'reports' ? hexToRgba(themeColor, 0.1) : 'transparent',
-                    color: viewMode === 'reports' ? themeColor : '#9ca3af',
-                    marginBottom: '0.5rem'
-                }}
-            >
-              <FileText size={20} />
-              <span>Relatórios</span>
-            </div>
-
             <div 
                 className={`nav-item ${viewMode === 'settings' ? 'active' : ''}`}
                 onClick={() => siteId && setViewMode('settings')}
@@ -1007,7 +993,9 @@ function Dashboard({ user, onLogout }) {
           ) : (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white', margin: 0 }}>Resumo</h2>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white', margin: 0 }}>
+                    {selectedSlug ? `Dashboard: /${selectedSlug}` : 'Resumo Geral'}
+                </h2>
                 
                 <div style={{ display: 'flex', gap: '1rem' }}>
                     <button 
