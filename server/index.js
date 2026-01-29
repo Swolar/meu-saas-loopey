@@ -12,7 +12,29 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key_123';
 
 const app = express();
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:3002',
+  'http://localhost:3003',
+  'https://loopeyviews.pro',
+  'https://www.loopeyviews.pro'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.loopeyviews.pro')) {
+      callback(null, true);
+    } else {
+      // Temporarily allow all for debugging if needed, but safer to restrict
+      // callback(null, true); 
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json()); // Enable JSON parsing for API
 app.set('trust proxy', true);
 
