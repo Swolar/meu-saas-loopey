@@ -14,6 +14,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key_123';
 const app = express();
 app.use(cors());
 app.use(express.json()); // Enable JSON parsing for API
+app.set('trust proxy', true);
 
 // Debug Version Endpoint
 app.get('/api/version', (req, res) => {
@@ -176,6 +177,7 @@ storage.init();
 
 // Active Sessions: socketId -> { siteId, url, referrer, joinedAt, lastHeartbeat }
 const activeSessions = new Map();
+const repeatVisits = new Map();
 
 // --- Middleware ---
 const authenticateToken = (req, res, next) => {
@@ -287,6 +289,29 @@ app.post('/api/sites', authenticateToken, async (req, res) => {
   }
 });
 
+// Update site (name, domain, slugs)
+app.put('/api/sites/:id', authenticateToken, async (req, res) => {
+  const { name, domain, slugs } = req.body;
+  const updateData = {};
+  if (typeof name === 'string') updateData.name = name;
+  if (typeof domain === 'string') updateData.domain = domain;
+  if (Array.isArray(slugs)) updateData.slugs = slugs;
+
+  if (Object.keys(updateData).length === 0) {
+    return res.status(400).json({ error: 'Nenhum campo válido para atualizar' });
+  }
+
+  try {
+    const updatedSite = await storage.updateSite(req.params.id, updateData);
+    if (!updatedSite) {
+      return res.status(404).json({ error: 'Site not found' });
+    }
+    res.json(updatedSite);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get specific site
 app.get('/api/sites/:id', authenticateToken, async (req, res) => {
   try {
@@ -296,6 +321,26 @@ app.get('/api/sites/:id', authenticateToken, async (req, res) => {
     } else {
       res.status(404).json({ error: 'Site not found' });
     }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get Kanban Board
+app.get('/api/sites/:id/kanban', authenticateToken, async (req, res) => {
+  try {
+    const board = await storage.getKanbanBoard(req.params.id);
+    res.json(board);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update Kanban Board
+app.put('/api/sites/:id/kanban', authenticateToken, async (req, res) => {
+  try {
+    const updatedBoard = await storage.updateKanbanBoard(req.params.id, req.body);
+    res.json(updatedBoard);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -321,11 +366,117 @@ app.delete('/api/sites/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Update uptime config
+app.put('/api/sites/:id/uptime', authenticateToken, async (req, res) => {
+  const { uptime_config, ntfy_config } = req.body;
+  
+  try {
+    const site = await storage.getSite(req.params.id);
+    if (!site) return res.status(404).json({ error: 'Site not found' });
+    
+    const updateData = {};
+    if (uptime_config) updateData.uptime_config = uptime_config;
+    if (ntfy_config) updateData.ntfy_config = ntfy_config;
+    
+    const updatedSite = await storage.updateSite(req.params.id, updateData);
+    res.json(updatedSite);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update cloaker config
+app.put('/api/sites/:id/cloaker', authenticateToken, async (req, res) => {
+  const { cloaker_config, force } = req.body;
+  
+  try {
+    const site = await storage.getSite(req.params.id);
+    if (!site) return res.status(404).json({ error: 'Site not found' });
+    
+    const existing = site.cloaker_config || {};
+    const locked = existing.locked === true;
+    const wantsUnlock = cloaker_config && cloaker_config.locked === false;
+    if (locked && !force && !wantsUnlock) {
+      return res.status(423).json({ error: 'Locked', message: 'Cloaker config is locked' });
+    }
+    const nextConfig = { ...existing, ...(cloaker_config || {}) };
+    const updateData = { cloaker_config: nextConfig };
+    
+    const updatedSite = await storage.updateSite(req.params.id, updateData);
+    res.json(updatedSite);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Public cloaker decision endpoint
+app.get('/cloaker/check', async (req, res) => {
+  const siteId = req.query.siteId;
+  const currentUrl = req.query.url || '';
+  if (!siteId) return res.status(400).json({ error: 'siteId required' });
+  try {
+    const site = await storage.getSite(siteId);
+    if (!site || !site.cloaker_config) return res.json({ action: 'allow' });
+    const cfg = site.cloaker_config;
+    if (!cfg.enabled) return res.json({ action: 'allow' });
+    const ua = req.headers['user-agent'] || '';
+    const isBot = /bot|spider|crawler|preview|facebook|whatsapp|telegram|twitter|linkedin|discord|curl|wget|python-requests|scrapy|scanner|prerender/i.test(ua);
+    if (isBot) {
+      try { await storage.incrementBotViews(siteId); } catch (e) {}
+    }
+    if (cfg.blockBots && isBot) {
+      if (cfg.safePageUrl) return res.json({ action: 'redirect', target: cfg.safePageUrl });
+      return res.json({ action: 'allow' });
+    }
+    const isMobile = /mobile|android|iphone|ipod/i.test(ua);
+    const isTablet = /ipad|tablet/i.test(ua) && !/mobile/i.test(ua);
+    const device = isTablet ? 'tablet' : (isMobile ? 'mobile' : 'desktop');
+    if (cfg.deviceFilter && cfg.deviceFilter[device] === false) {
+      if (cfg.safePageUrl) return res.json({ action: 'redirect', target: cfg.safePageUrl });
+      return res.json({ action: 'allow' });
+    }
+    if (cfg.repeatVisitor && cfg.repeatVisitor.enabled) {
+      const rawIp = (req.headers['x-forwarded-for'] || '').toString();
+      const ip = rawIp ? rawIp.split(',')[0].trim() : (req.ip || req.socket?.remoteAddress || 'unknown');
+      const key = `${siteId}|${ip}`;
+      const prev = repeatVisits.get(key) || 0;
+      const next = prev + 1;
+      repeatVisits.set(key, next);
+      const threshold = Number(cfg.repeatVisitor.threshold || 3);
+      if (threshold > 0 && next >= threshold) {
+        const targetPref = cfg.repeatVisitor.target === 'offer' ? (cfg.offerPageUrl || cfg.safePageUrl) : (cfg.safePageUrl || cfg.offerPageUrl);
+        if (targetPref && targetPref !== currentUrl) {
+          return res.json({ action: 'redirect', target: targetPref, reason: 'repeat' });
+        }
+      }
+    }
+    if (cfg.offerPageUrl && cfg.offerPageUrl.length > 0 && cfg.offerPageUrl !== currentUrl) {
+      return res.json({ action: 'redirect', target: cfg.offerPageUrl });
+    }
+    return res.json({ action: 'allow' });
+  } catch (err) {
+    console.error('Cloaker check error:', err);
+    res.json({ action: 'allow' });
+  }
+});
+
 // Get site daily history
 app.get('/api/sites/:id/daily-history', authenticateToken, async (req, res) => {
   try {
     const days = req.query.days ? parseInt(req.query.days) : 30;
-    const history = await storage.getDailyStats(req.params.id, days);
+    const slug = req.query.slug || null;
+    const history = await storage.getDailyStats(req.params.id, days, slug);
+    res.json(history);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get site daily bot history
+app.get('/api/sites/:id/daily-bot-history', authenticateToken, async (req, res) => {
+  try {
+    const days = req.query.days ? parseInt(req.query.days) : 30;
+    const history = await storage.getDailyBotStats(req.params.id, days);
     res.json(history);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -435,6 +586,19 @@ async function getStats(siteId, timeframe = 'minutes', slug = null) {
     } catch (e) {
         console.warn(`Failed to load site info for ${siteId}:`, e.message);
     }
+
+    // Get today's bot stats
+    let todayBots = 0;
+    try {
+        const botStats = await storage.getDailyBotStats(siteId);
+        const today = new Date().toISOString().split('T')[0];
+        const todayEntry = botStats.find(s => s.date === today);
+        if (todayEntry) {
+            todayBots = todayEntry.bots;
+        }
+    } catch (e) {
+        console.warn(`Failed to load bot stats for ${siteId}:`, e.message);
+    }
     
     let history = [];
     // If slug is provided, we currently don't have per-slug history storage.
@@ -460,7 +624,8 @@ async function getStats(siteId, timeframe = 'minutes', slug = null) {
         usersBadge: 'Ao Vivo',
         avgTime: averageDuration,
         mobile: deviceCounts.mobile,
-        desktop: deviceCounts.desktop
+        desktop: deviceCounts.desktop,
+        bots: todayBots
     };
 
     if (timeframe === 'days') {
@@ -589,7 +754,7 @@ io.on('connection', (socket) => {
 
   // --- Tracker Events ---
   
-  socket.on('join', (data) => {
+  socket.on('join', async (data) => {
     let { siteId, url, referrer, userAgent } = data;
     
     if (!siteId) {
@@ -602,17 +767,28 @@ io.on('connection', (socket) => {
 
     console.log(`User joined site ${siteId}: ${url} (Socket: ${socket.id})`);
     
+    // Identify slug
+    let matchedSlug = null;
+    try {
+        const site = await storage.getSite(siteId);
+        if (site && Array.isArray(site.slugs)) {
+            // Find matched slug
+            matchedSlug = site.slugs.find(s => url && url.includes(s));
+        }
+    } catch (e) { console.error('Error finding site/slug:', e); }
+
     // Store session
     activeSessions.set(socket.id, {
       siteId,
       url,
       referrer,
       userAgent,
+      slug: matchedSlug,
       joinedAt: Date.now(),
       lastHeartbeat: Date.now()
     });
 
-    storage.incrementTotalViews(siteId);
+    storage.incrementTotalViews(siteId, matchedSlug);
 
     // Join site room (optional, useful if we want to msg all users of a site)
     socket.join(`site_${siteId}`);
@@ -629,14 +805,25 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('page_view', (data) => {
+  socket.on('page_view', async (data) => {
     const session = activeSessions.get(socket.id);
     if (session) {
       session.url = data.url;
+      
+      // Update slug on navigation
+      let matchedSlug = null;
+      try {
+          const site = await storage.getSite(session.siteId);
+          if (site && Array.isArray(site.slugs)) {
+              matchedSlug = site.slugs.find(s => data.url && data.url.includes(s));
+          }
+      } catch (e) {}
+      session.slug = matchedSlug;
+
       activeSessions.set(socket.id, session);
       
       // Increment total views on navigation too
-      storage.incrementTotalViews(session.siteId);
+      storage.incrementTotalViews(session.siteId, matchedSlug);
       
       broadcastStats(session.siteId, 'minutes');
     }
@@ -728,6 +915,85 @@ setInterval(() => {
 
 // Record history every 5 seconds
 setInterval(updateHistory, 5000);
+
+// Uptime Monitor Loop
+async function checkUptime() {
+  try {
+    const sites = await storage.getSites();
+    for (const site of sites) {
+      if (site.uptime_config && site.uptime_config.enabled && site.uptime_config.url) {
+        const intervalMap = {
+            '1m': 1 * 60 * 1000,
+            '5m': 5 * 60 * 1000,
+            '10m': 10 * 60 * 1000,
+            '30m': 30 * 60 * 1000,
+            '1h': 60 * 60 * 1000
+        };
+        const interval = intervalMap[site.uptime_config.interval] || 5 * 60 * 1000;
+        const lastCheck = site.uptime_config.last_check || 0;
+        const now = Date.now();
+        
+        if (now - lastCheck >= interval) {
+           // Check URL
+           try {
+               const controller = new AbortController();
+               const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+               
+               const response = await fetch(site.uptime_config.url, { 
+                   method: 'HEAD',
+                   signal: controller.signal
+               });
+               clearTimeout(timeoutId);
+               
+               const isUp = response.ok; // 200-299
+               const status = isUp ? 'up' : 'down';
+               
+               // Update status if changed or just update last_check
+               await storage.updateSiteUptimeStatus(site.id, status, now);
+               
+               // Notify if DOWN
+               if (!isUp) {
+                   console.log(`Site ${site.id} is DOWN (${site.uptime_config.url})`);
+                   // Send Ntfy
+                   if (site.ntfy_config && site.ntfy_config.topic) {
+                       await fetch(`https://ntfy.sh/${site.ntfy_config.topic}`, {
+                           method: 'POST',
+                           body: `O site ${site.name} (${site.uptime_config.url}) está offline! Código: ${response.status}`,
+                           headers: {
+                               'Title': '🚨 ALERTA: Site Offline',
+                               'Priority': 'urgent',
+                               'Tags': 'rotating_light,warning'
+                           }
+                       });
+                   }
+               }
+           } catch (error) {
+               console.error(`Error checking uptime for ${site.id}:`, error.message);
+               // Treat network errors as DOWN
+               await storage.updateSiteUptimeStatus(site.id, 'down', now);
+               
+               if (site.ntfy_config && site.ntfy_config.topic) {
+                   await fetch(`https://ntfy.sh/${site.ntfy_config.topic}`, {
+                       method: 'POST',
+                       body: `O site ${site.name} (${site.uptime_config.url}) está inacessível. Erro: ${error.message}`,
+                       headers: {
+                           'Title': '🚨 ALERTA: Site Inacessível',
+                           'Priority': 'urgent',
+                           'Tags': 'rotating_light,warning'
+                       }
+                   });
+               }
+           }
+        }
+      }
+    }
+  } catch (err) {
+      console.error('Error in uptime monitor:', err);
+  }
+}
+
+// Run uptime check every 1 minute (to catch 1m intervals)
+setInterval(checkUptime, 60 * 1000);
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {

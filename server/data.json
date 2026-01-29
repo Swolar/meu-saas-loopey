@@ -7,263 +7,276 @@
         "name": "asasdeanjo.org",
         "domain": "asasdeanjo.org",
         "createdAt": 1767992016357,
-        "theme_color": "#006fee"
+        "theme_color": "#006fee",
+        "slugs": [
+          "upsell",
+          "upsell2"
+        ],
+        "totalViews": 2
       }
     ]
   ],
-  "history": [
+  "siteHistory": [
     [
       "bnlpox3p",
       {
         "minutes": [
           {
-            "time": "14:03:35",
+            "time": "20:02:58",
             "users": 0
           },
           {
-            "time": "14:03:40",
+            "time": "20:03:03",
             "users": 0
           },
           {
-            "time": "14:03:45",
+            "time": "20:03:08",
             "users": 0
           },
           {
-            "time": "14:03:50",
+            "time": "20:03:13",
             "users": 0
           },
           {
-            "time": "14:03:55",
+            "time": "20:03:18",
             "users": 0
           },
           {
-            "time": "14:04:00",
+            "time": "20:03:23",
             "users": 0
           },
           {
-            "time": "14:04:05",
+            "time": "20:03:28",
             "users": 0
           },
           {
-            "time": "14:04:10",
+            "time": "20:03:33",
             "users": 0
           },
           {
-            "time": "14:04:15",
+            "time": "20:03:38",
             "users": 0
           },
           {
-            "time": "14:04:20",
+            "time": "20:03:44",
             "users": 0
           },
           {
-            "time": "14:04:25",
+            "time": "20:03:49",
             "users": 0
           },
           {
-            "time": "14:04:30",
+            "time": "20:03:54",
             "users": 0
           },
           {
-            "time": "14:04:35",
+            "time": "20:03:59",
             "users": 0
           },
           {
-            "time": "14:04:40",
+            "time": "20:04:04",
             "users": 0
           },
           {
-            "time": "14:04:45",
+            "time": "20:04:09",
             "users": 0
           },
           {
-            "time": "14:04:50",
+            "time": "20:04:14",
             "users": 0
           },
           {
-            "time": "14:04:55",
+            "time": "20:04:19",
             "users": 0
           },
           {
-            "time": "14:05:00",
+            "time": "20:04:24",
             "users": 0
           },
           {
-            "time": "14:05:05",
+            "time": "20:04:29",
             "users": 0
           },
           {
-            "time": "14:05:10",
+            "time": "20:04:34",
             "users": 0
           },
           {
-            "time": "14:05:15",
+            "time": "20:04:39",
             "users": 0
           },
           {
-            "time": "14:05:20",
+            "time": "20:04:44",
             "users": 0
           },
           {
-            "time": "14:05:25",
+            "time": "20:04:49",
             "users": 0
           },
           {
-            "time": "14:05:30",
+            "time": "20:04:54",
             "users": 0
           },
           {
-            "time": "14:05:35",
+            "time": "20:04:59",
             "users": 0
           },
           {
-            "time": "14:05:40",
+            "time": "20:05:04",
             "users": 0
           },
           {
-            "time": "14:05:45",
+            "time": "20:05:09",
             "users": 0
           },
           {
-            "time": "14:05:50",
+            "time": "20:05:14",
             "users": 0
           },
           {
-            "time": "14:05:55",
+            "time": "20:05:19",
             "users": 0
           },
           {
-            "time": "14:06:00",
+            "time": "20:05:24",
             "users": 0
           },
           {
-            "time": "14:06:05",
+            "time": "20:05:29",
             "users": 0
           },
           {
-            "time": "14:06:10",
+            "time": "20:05:34",
             "users": 0
           },
           {
-            "time": "14:06:15",
+            "time": "20:05:39",
             "users": 0
           },
           {
-            "time": "14:06:20",
+            "time": "20:05:44",
             "users": 0
           },
           {
-            "time": "14:06:25",
+            "time": "20:05:49",
             "users": 0
           },
           {
-            "time": "14:06:30",
+            "time": "20:05:54",
             "users": 0
           },
           {
-            "time": "14:06:35",
+            "time": "20:05:59",
             "users": 0
           },
           {
-            "time": "14:06:40",
+            "time": "20:06:04",
             "users": 0
           },
           {
-            "time": "14:06:45",
+            "time": "20:06:09",
             "users": 0
           },
           {
-            "time": "14:06:50",
+            "time": "20:06:14",
             "users": 0
           },
           {
-            "time": "14:06:55",
+            "time": "20:06:19",
             "users": 0
           },
           {
-            "time": "14:07:00",
+            "time": "20:06:24",
             "users": 0
           },
           {
-            "time": "14:07:05",
+            "time": "20:06:29",
             "users": 0
           },
           {
-            "time": "14:07:10",
+            "time": "20:06:34",
             "users": 0
           },
           {
-            "time": "14:07:15",
+            "time": "20:06:39",
             "users": 0
           },
           {
-            "time": "14:07:20",
+            "time": "20:06:44",
             "users": 0
           },
           {
-            "time": "14:07:25",
+            "time": "20:06:49",
             "users": 0
           },
           {
-            "time": "14:07:30",
+            "time": "20:06:54",
             "users": 0
           },
           {
-            "time": "14:07:35",
+            "time": "20:06:59",
             "users": 0
           },
           {
-            "time": "14:07:40",
+            "time": "20:07:04",
             "users": 0
           },
           {
-            "time": "14:07:45",
+            "time": "20:07:09",
             "users": 0
           },
           {
-            "time": "14:07:50",
+            "time": "20:07:14",
             "users": 0
           },
           {
-            "time": "14:07:55",
+            "time": "20:07:19",
             "users": 0
           },
           {
-            "time": "14:08:00",
+            "time": "20:07:24",
             "users": 0
           },
           {
-            "time": "14:08:05",
+            "time": "20:07:29",
             "users": 0
           },
           {
-            "time": "14:08:10",
+            "time": "20:07:34",
             "users": 0
           },
           {
-            "time": "14:08:15",
+            "time": "20:07:39",
             "users": 0
           },
           {
-            "time": "14:08:20",
+            "time": "20:07:44",
             "users": 0
           },
           {
-            "time": "14:08:25",
+            "time": "20:07:49",
             "users": 0
           },
           {
-            "time": "14:08:30",
+            "time": "20:07:54",
             "users": 0
           }
         ],
         "hours": [
           {
-            "time": "17:00",
+            "time": "14:00",
             "users": 0
           },
           {
-            "time": "18:00",
+            "time": "10:00",
+            "users": 0
+          },
+          {
+            "time": "11:00",
+            "users": 0
+          },
+          {
+            "time": "12:00",
             "users": 0
           },
           {
@@ -273,33 +286,67 @@
           {
             "time": "20:00",
             "users": 0
-          },
-          {
-            "time": "21:00",
-            "users": 0
-          },
-          {
-            "time": "22:00",
-            "users": 0
-          },
-          {
-            "time": "13:00",
-            "users": 0
-          },
-          {
-            "time": "14:00",
-            "users": 0
           }
         ],
         "days": [
           {
-            "time": "Sex",
+            "time": "Sáb",
             "users": 0
           },
           {
-            "time": "Sáb",
+            "time": "Ter",
             "users": 0
           }
+        ]
+      }
+    ]
+  ],
+  "dailyStats": [
+    [
+      "bnlpox3p",
+      {
+        "2026-01-27": {
+          "total": 2,
+          "slugs": {}
+        }
+      }
+    ]
+  ],
+  "kanbanBoards": [
+    [
+      "bnlpox3p",
+      {
+        "tasks": {
+          "task-1769554543461": {
+            "id": "task-1769554543461",
+            "content": "subir donate hoje",
+            "createdAt": "2026-01-27T22:55:43.461Z"
+          }
+        },
+        "columns": {
+          "todo": {
+            "id": "todo",
+            "title": "A Fazer",
+            "taskIds": [
+              "task-1769554543461"
+            ],
+            "color": "#04f500"
+          },
+          "in-progress": {
+            "id": "in-progress",
+            "title": "Em Progresso",
+            "taskIds": []
+          },
+          "done": {
+            "id": "done",
+            "title": "Concluído",
+            "taskIds": []
+          }
+        },
+        "columnOrder": [
+          "todo",
+          "in-progress",
+          "done"
         ]
       }
     ]
@@ -309,8 +356,16 @@
       "tarik",
       {
         "username": "tarik",
-        "password": "12345",
-        "createdAt": 1767987052407
+        "password": "$2b$10$VRT1.4FKckaAk4X3UVloaOlHlTSI6lCSDpzFyDQQiQN77dQDGzlse",
+        "createdAt": 1769274126906
+      }
+    ],
+    [
+      "testuser",
+      {
+        "username": "testuser",
+        "password": "$2b$10$.gBoZYSIYi8mEc/5PSZ9duMMQFnZZtxWZlBCIeMezvuQSY.zPgSKy",
+        "createdAt": 1769274014655
       }
     ]
   ]

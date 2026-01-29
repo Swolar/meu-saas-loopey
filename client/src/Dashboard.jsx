@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import io from 'socket.io-client';
 import { 
   LayoutDashboard, Globe, Settings, 
@@ -8,9 +8,14 @@ import {
   Users, Clock, Smartphone, Monitor,
   Maximize2, Minimize2,
   User, Shield, MessageSquare, Moon, Sun, Lock,
-  FileText, BookOpen, Layers, BarChart2
+  FileText, BookOpen, Layers, BarChart2, ChevronDown, ChevronRight, CreditCard, Bell, Bot, Trello
 } from 'lucide-react';
 import SitesList from './SitesList';
+import Plans from './Plans';
+import DashboardNotifications from './DashboardNotifications';
+import DashboardMonitoring from './DashboardMonitoring';
+import DashboardKanban from './DashboardKanban';
+import DashboardCloaker from './DashboardCloaker';
 import { StatCard, TrafficChart, DeviceChart, TopPagesTable } from './DashboardWidgets';
 import { getApiUrl, SOCKET_URL, authFetch } from './config';
 
@@ -35,18 +40,20 @@ const DEFAULT_LAYOUT = [
   { id: 'avg_time', colSpan: 1, visible: true },
   { id: 'mobile', colSpan: 1, visible: true },
   { id: 'desktop', colSpan: 1, visible: true },
+  { id: 'bots', colSpan: 1, visible: true },
   { id: 'traffic_chart', colSpan: 4, visible: true },
   { id: 'device_chart', colSpan: 2, visible: true },
   { id: 'top_pages', colSpan: 2, visible: true },
 ];
 
-function Dashboard({ user, onLogout }) {
+function Dashboard({ user, onLogout, initialView }) {
   useEffect(() => {
     console.log("LoopeyLive Dashboard v1.0.3 loaded");
   }, []);
 
   const { siteId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [stats, setStats] = useState({
     totalOnline: 0,
     topPages: [],
@@ -60,7 +67,7 @@ function Dashboard({ user, onLogout }) {
   const [selectedSlug, setSelectedSlug] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [sites, setSites] = useState([]);
-  const [viewMode, setViewMode] = useState('stats');
+  const [viewMode, setViewMode] = useState(initialView || 'stats');
   const [themeColor, setThemeColor] = useState(DEFAULT_THEME);
   const [settingsTab, setSettingsTab] = useState('profile');
   const [themeMode, setThemeMode] = useState(() => localStorage.getItem('theme_mode') || 'dark');
@@ -72,6 +79,7 @@ function Dashboard({ user, onLogout }) {
   const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
   
   const [dailyStats, setDailyStats] = useState([]);
+  const [dailyBotStats, setDailyBotStats] = useState([]);
   const [profileData, setProfileData] = useState({
     name: user?.username || '',
     email: '',
@@ -79,6 +87,43 @@ function Dashboard({ user, onLogout }) {
     phone: ''
   });
   const [showDebug, setShowDebug] = useState(false);
+  const [expandedSites, setExpandedSites] = useState({});
+  const lastNotificationRef = useRef(Date.now());
+  const statsRef = useRef(stats);
+
+  useEffect(() => {
+    statsRef.current = stats;
+  }, [stats]);
+
+  // Sync initialView prop with viewMode state
+  useEffect(() => {
+    if (initialView) {
+        setViewMode(initialView);
+    }
+  }, [initialView]);
+
+  useEffect(() => {
+    if (siteId) {
+      // Se não estiver expandido, expandir
+      if (!expandedSites[siteId]) {
+        setExpandedSites(prev => ({ ...prev, [siteId]: true }));
+      }
+      
+      // Restaurar estado de navegação se houver
+      if (location.state?.viewMode) {
+        setViewMode(location.state.viewMode);
+      }
+      if (location.state?.selectedSlug) {
+        setSelectedSlug(location.state.selectedSlug);
+      }
+    }
+  }, [siteId, location]);
+
+  const toggleSiteExpansion = (e, id) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setExpandedSites(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   useEffect(() => {
     if (themeMode === 'light') {
@@ -227,7 +272,12 @@ function Dashboard({ user, onLogout }) {
   useEffect(() => {
     if (!siteId) {
       fetchSites();
-      setViewMode('stats');
+      // Only default to stats if we are not on a specific global route
+      if (initialView) {
+        setViewMode(initialView);
+      } else {
+        setViewMode('stats');
+      }
     } else {
       authFetch(`/api/sites/${siteId}`)
         .then(res => res.json())
@@ -237,11 +287,14 @@ function Dashboard({ user, onLogout }) {
         })
         .catch(err => console.error('Error fetching site details:', err));
       
-      if (viewMode !== 'reports' && viewMode !== 'settings' && viewMode !== 'instructions') {
+      // Respect initialView if provided, otherwise default logic
+      if (initialView) {
+         setViewMode(initialView);
+      } else if (viewMode !== 'reports' && viewMode !== 'settings' && viewMode !== 'instructions' && viewMode !== 'notifications' && viewMode !== 'cloaker' && viewMode !== 'monitoring') {
          setViewMode('stats');
       }
     }
-  }, [siteId]);
+  }, [siteId, initialView]);
 
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
@@ -300,7 +353,11 @@ function Dashboard({ user, onLogout }) {
   
   const fetchDailyStats = () => {
     if (!siteId) return;
-    authFetch(`/api/sites/${siteId}/daily-history`)
+    const url = selectedSlug 
+        ? `/api/sites/${siteId}/daily-history?slug=${encodeURIComponent(selectedSlug)}`
+        : `/api/sites/${siteId}/daily-history`;
+
+    authFetch(url)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -308,6 +365,15 @@ function Dashboard({ user, onLogout }) {
         }
       })
       .catch(err => console.error('Error fetching daily stats:', err));
+    
+    authFetch(`/api/sites/${siteId}/daily-bot-history`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setDailyBotStats(data);
+        }
+      })
+      .catch(err => console.error('Error fetching daily bot stats:', err));
   };
 
   const handleProfileChange = (e) => {
@@ -319,6 +385,74 @@ function Dashboard({ user, onLogout }) {
     console.log('Saving profile:', profileData);
     alert('Perfil salvo localmente (simulação). A API de perfil ainda não está implementada.');
   };
+
+  // Notification Loop (Decoupled from socket events)
+  useEffect(() => {
+    const checkNotifications = () => {
+        try {
+            const eventConfigStr = localStorage.getItem('eventConfig');
+            const ntfyConfigStr = localStorage.getItem('ntfyConfig');
+            
+            if (!eventConfigStr || !ntfyConfigStr) return;
+            
+            const eventConfig = JSON.parse(eventConfigStr);
+            const ntfyConfig = JSON.parse(ntfyConfigStr);
+            
+            if (!eventConfig.liveActivity || !ntfyConfig.topic) return;
+
+            const intervalMap = {
+                '5m': 5 * 60 * 1000,
+                '10m': 10 * 60 * 1000,
+                '20m': 20 * 60 * 1000,
+                '30m': 30 * 60 * 1000,
+                '1h': 60 * 60 * 1000
+            };
+            const interval = intervalMap[eventConfig.liveActivityInterval] || 5 * 60 * 1000;
+            const now = Date.now();
+            
+            // Persistence logic
+            const lastTopic = localStorage.getItem('lastNotificationTopic') || '';
+            let lastTime = parseInt(localStorage.getItem('lastNotificationTime') || '0', 10);
+            if (isNaN(lastTime) || lastTime > now || lastTopic !== ntfyConfig.topic) {
+                lastTime = 0;
+                localStorage.setItem('lastNotificationTopic', ntfyConfig.topic);
+                localStorage.setItem('lastNotificationTime', '0');
+            }
+            if (lastTime === 0) {
+                lastTime = now;
+                localStorage.setItem('lastNotificationTime', lastTime.toString());
+                localStorage.setItem('lastNotificationTopic', ntfyConfig.topic);
+            }
+
+            if (now - lastTime >= interval) {
+                const currentStats = statsRef.current;
+                const totalOnline = currentStats?.totalOnline || 0;
+
+                // Send Ntfy
+                 fetch(`https://ntfy.sh/${ntfyConfig.topic}`, {
+                    method: 'POST',
+                    body: `Usuários Online: ${totalOnline}`,
+                    headers: {
+                        'Title': 'LoopeyLive: Status do Site',
+                        'Priority': 'high',
+                        'Tags': 'chart_with_upwards_trend'
+                    }
+                }).then(() => {
+                    console.log('Ntfy auto-notification sent');
+                    const nextTime = Date.now();
+                    localStorage.setItem('lastNotificationTime', nextTime.toString());
+                    localStorage.setItem('lastNotificationTopic', ntfyConfig.topic);
+                    lastNotificationRef.current = nextTime;
+                }).catch(err => console.error('Ntfy auto-notification error:', err));
+            }
+        } catch (error) {
+            console.error('Notification loop error:', error);
+        }
+    };
+
+    const timer = setInterval(checkNotifications, 10000); // Check every 10s
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!siteId) return;
@@ -334,6 +468,8 @@ function Dashboard({ user, onLogout }) {
     newSocket.on('stats_update', (data) => {
       setStats(data);
       setLastUpdated(new Date());
+
+
     });
 
     return () => newSocket.close();
@@ -343,7 +479,7 @@ function Dashboard({ user, onLogout }) {
     if (siteId && viewMode === 'reports') {
         fetchDailyStats();
     }
-  }, [siteId, viewMode]);
+  }, [siteId, viewMode, selectedSlug]);
 
   const handleManualUpdate = () => {
     if (socket && siteId) {
@@ -374,7 +510,8 @@ function Dashboard({ user, onLogout }) {
         usersBadge: 'Ao Vivo',
         avgTime: stats?.averageDuration || 0,
         mobile: stats?.devices?.mobile || 0,
-        desktop: stats?.devices?.desktop || 0
+        desktop: stats?.devices?.desktop || 0,
+        bots: 0
     };
 
     switch (id) {
@@ -405,6 +542,13 @@ function Dashboard({ user, onLogout }) {
           value={summary.desktop} 
           icon={Monitor} 
           footer="Usuários em PC" 
+        />;
+      case 'bots':
+        return <StatCard 
+          title="Bots (Hoje)" 
+          value={summary.bots || 0} 
+          icon={Bot} 
+          footer="Tráfego não humano" 
         />;
       case 'traffic_chart':
         return <TrafficChart 
@@ -437,40 +581,85 @@ function Dashboard({ user, onLogout }) {
           <img src="/logo.svg" alt="LoopeyLive" style={{ height: '60px', objectFit: 'contain' }} />
         </div>
         
-        {siteId && (
-          <div style={{ marginBottom: '1rem', padding: '1rem', background: '#1a1d27', borderRadius: '8px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-               <span style={{ fontWeight: 'bold', color: 'white', fontSize: '0.9rem' }}>
-                 {new Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(stats?.totalViews || 0)} / 1M Acessos
-               </span>
-               <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>
-                 {Math.min(((stats?.totalViews || 0) / 1000000) * 100, 100).toFixed(0)}%
-               </span>
+        {/* Account Limits / Gamification Card */}
+        {(() => {
+          // Calculate total views across all sites
+          const accountTotalViews = sites.reduce((acc, site) => acc + (site.totalViews || 0), 0);
+          const LIMIT = 1000000;
+          const percentage = Math.min((accountTotalViews / LIMIT) * 100, 100);
+          
+          return (
+            <div style={{ 
+              marginBottom: '1.5rem', 
+              padding: '1rem', 
+              background: 'linear-gradient(145deg, #1a1d27 0%, #111319 100%)', 
+              borderRadius: '12px',
+              border: '1px solid rgba(255, 255, 255, 0.05)',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                 <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#9ca3af', fontWeight: 'bold', letterSpacing: '0.05em' }}>Seu Plano</span>
+                    <span style={{ fontWeight: 'bold', color: 'white', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <Award size={14} color="#f59e0b" />
+                        Free
+                    </span>
+                 </div>
+                 <div style={{ textAlign: 'right' }}>
+                    <span style={{ color: themeColor, fontSize: '0.85rem', fontWeight: 'bold' }}>
+                        {percentage.toFixed(0)}%
+                    </span>
+                 </div>
+              </div>
+              
+              <div style={{ width: '100%', height: '8px', background: '#2a2e3b', borderRadius: '4px', overflow: 'hidden', marginBottom: '0.5rem' }}>
+                <div style={{ 
+                  width: `${percentage}%`, 
+                  height: '100%', 
+                  background: `linear-gradient(90deg, ${themeColor} 0%, #a855f7 100%)`,
+                  borderRadius: '4px',
+                  transition: 'width 0.5s ease',
+                  boxShadow: `0 0 10px ${hexToRgba(themeColor, 0.5)}`
+                }}></div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6b7280' }}>
+                 <span>{new Intl.NumberFormat('pt-BR', { notation: "compact", compactDisplay: "short" }).format(accountTotalViews)} XP</span>
+                 <span>1M Limite</span>
+              </div>
             </div>
-            
-            <div style={{ width: '100%', height: '6px', background: '#2a2e3b', borderRadius: '3px', overflow: 'hidden' }}>
-              <div style={{ 
-                width: `${Math.min(((stats?.totalViews || 0) / 1000000) * 100, 100)}%`, 
-                height: '100%', 
-                background: themeColor,
-                borderRadius: '3px',
-                transition: 'width 0.5s ease'
-              }}></div>
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
         <nav className="sidebar-nav">
           <Link 
             to="/" 
-            className={`nav-item ${!siteId ? 'active' : ''}`}
+            className={`nav-item ${!siteId && viewMode !== 'plans' ? 'active' : ''}`}
             style={{ 
-              background: !siteId ? hexToRgba(DEFAULT_THEME, 0.1) : 'transparent',
-              color: !siteId ? DEFAULT_THEME : '#9ca3af'
+              background: !siteId && viewMode !== 'plans' ? hexToRgba(DEFAULT_THEME, 0.1) : 'transparent',
+              color: !siteId && viewMode !== 'plans' ? DEFAULT_THEME : '#9ca3af'
             }}
+            onClick={() => setViewMode('stats')}
           >
             <LayoutDashboard size={20} />
             <span>Visão Geral</span>
+          </Link>
+
+          <Link 
+            to="/plans" 
+            className={`nav-item ${viewMode === 'plans' ? 'active' : ''}`}
+            style={{ 
+              background: viewMode === 'plans' ? hexToRgba(DEFAULT_THEME, 0.1) : 'transparent',
+              color: viewMode === 'plans' ? DEFAULT_THEME : '#9ca3af',
+              marginBottom: '0.5rem'
+            }}
+            onClick={() => {
+                setViewMode('plans');
+                setSelectedSlug(null);
+            }}
+          >
+            <CreditCard size={20} />
+            <span>Planos</span>
           </Link>
 
           <div style={{ marginTop: '1.5rem', marginBottom: '0.5rem', paddingLeft: '1rem', fontSize: '0.75rem', color: '#6b7280', fontWeight: 'bold', textTransform: 'uppercase' }}>
@@ -485,39 +674,65 @@ function Dashboard({ user, onLogout }) {
               
               return (
               <div key={site.id}>
-                <Link 
-                  to={`/dashboard/${site.id}`}
-                  onClick={() => {
-                    if (isActiveSite) {
-                        setViewMode('stats');
-                        setSelectedSlug(null);
-                    }
-                  }}
+                <div 
                   className={`nav-item ${isActiveSite ? 'active' : ''}`}
                   style={{ 
-                    justifyContent: 'flex-start',
+                    justifyContent: 'space-between',
                     paddingLeft: '1rem',
                     background: isActiveSite ? hexToRgba(themeColor, 0.1) : 'transparent',
                     color: isActiveSite ? themeColor : '#9ca3af',
-                    marginBottom: isActiveSite ? '0.25rem' : '0'
+                    marginBottom: (isActiveSite || expandedSites[site.id]) ? '0.25rem' : '0',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    paddingRight: '0.5rem'
                   }}
                 >
-                  <Globe size={16} />
-                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '0.9rem' }}>{site.name}</span>
-                </Link>
+                    <Link 
+                      to={`/dashboard/${site.id}`}
+                      onClick={() => {
+                        if (isActiveSite) {
+                            setViewMode('stats');
+                            setSelectedSlug(null);
+                        }
+                        // Se estiver colapsado, expandir ao clicar no link principal
+                        if (!expandedSites[site.id]) {
+                            setExpandedSites(prev => ({ ...prev, [site.id]: true }));
+                        }
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, color: 'inherit', textDecoration: 'none', overflow: 'hidden' }}
+                    >
+                      <Globe size={16} style={{ flexShrink: 0 }} />
+                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '0.9rem' }}>{site.name}</span>
+                    </Link>
 
-                {isActiveSite && (
+                    <div 
+                        onClick={(e) => toggleSiteExpansion(e, site.id)}
+                        style={{ padding: '4px', display: 'flex', alignItems: 'center', borderRadius: '4px',  }}
+                    >
+                        {expandedSites[site.id] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    </div>
+                </div>
+
+                {expandedSites[site.id] && (
                   <div style={{ marginLeft: '1rem', borderLeft: `1px solid ${hexToRgba(themeColor, 0.2)}`, paddingLeft: '0.5rem', marginTop: '0.25rem', marginBottom: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                     {/* 1. Resumo */}
                     <div 
-                      onClick={() => { setSelectedSlug(null); setViewMode('stats'); }}
+                      onClick={() => { 
+                          if (isActiveSite) {
+                            setSelectedSlug(null); 
+                            setViewMode('stats'); 
+                          } else {
+                            navigate(`/dashboard/${site.id}`);
+                          }
+                      }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: '0.5rem',
                         padding: '0.4rem 0.5rem', borderRadius: '4px',
                         cursor: 'pointer',
                         fontSize: '0.85rem',
-                        color: (!selectedSlug && viewMode === 'stats') ? themeColor : '#9ca3af',
-                        background: (!selectedSlug && viewMode === 'stats') ? hexToRgba(themeColor, 0.1) : 'transparent',
+                        color: (!selectedSlug && viewMode === 'stats' && isActiveSite) ? themeColor : '#9ca3af',
+                        background: (!selectedSlug && viewMode === 'stats' && isActiveSite) ? hexToRgba(themeColor, 0.1) : 'transparent',
                         transition: 'all 0.2s'
                       }}
                     >
@@ -534,14 +749,21 @@ function Dashboard({ user, onLogout }) {
                             {(site.slugs || []).map(slug => (
                                 <div 
                                     key={slug}
-                                    onClick={() => { setSelectedSlug(slug); setViewMode('stats'); }}
+                                    onClick={() => { 
+                                        if (isActiveSite) {
+                                            setSelectedSlug(slug); 
+                                            setViewMode('stats'); 
+                                        } else {
+                                            navigate(`/dashboard/${site.id}`, { state: { selectedSlug: slug } });
+                                        }
+                                    }}
                                     style={{
                                         display: 'flex', alignItems: 'center', gap: '0.5rem',
                                         padding: '0.3rem 0.5rem', borderRadius: '4px',
                                         cursor: 'pointer',
                                         fontSize: '0.85rem',
-                                        color: (selectedSlug === slug && viewMode === 'stats') ? themeColor : '#9ca3af',
-                                        background: (selectedSlug === slug && viewMode === 'stats') ? hexToRgba(themeColor, 0.1) : 'transparent',
+                                        color: (selectedSlug === slug && viewMode === 'stats' && isActiveSite) ? themeColor : '#9ca3af',
+                                        background: (selectedSlug === slug && viewMode === 'stats' && isActiveSite) ? hexToRgba(themeColor, 0.1) : 'transparent',
                                         transition: 'all 0.2s'
                                     }}
                                 >
@@ -554,14 +776,21 @@ function Dashboard({ user, onLogout }) {
 
                     {/* 3. Relatórios */}
                     <div 
-                      onClick={() => { setViewMode('reports'); setSelectedSlug(null); }}
+                      onClick={() => { 
+                          if (isActiveSite) {
+                            setViewMode('reports'); 
+                            setSelectedSlug(null); 
+                          } else {
+                            navigate(`/dashboard/${site.id}`, { state: { viewMode: 'reports' } });
+                          }
+                      }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: '0.5rem',
                         padding: '0.4rem 0.5rem', borderRadius: '4px',
                         cursor: 'pointer',
                         fontSize: '0.85rem',
-                        color: viewMode === 'reports' ? themeColor : '#9ca3af',
-                        background: viewMode === 'reports' ? hexToRgba(themeColor, 0.1) : 'transparent',
+                        color: (viewMode === 'reports' && isActiveSite) ? themeColor : '#9ca3af',
+                        background: (viewMode === 'reports' && isActiveSite) ? hexToRgba(themeColor, 0.1) : 'transparent',
                         transition: 'all 0.2s'
                       }}
                     >
@@ -569,16 +798,104 @@ function Dashboard({ user, onLogout }) {
                       <span>Relatórios</span>
                     </div>
 
-                    {/* 4. Instruções */}
+                    {/* 4. Notificações */}
                     <div 
-                      onClick={() => { setViewMode('instructions'); setSelectedSlug(null); }}
+                      onClick={() => { 
+                          if (isActiveSite) {
+                            setViewMode('notifications'); 
+                            setSelectedSlug(null); 
+                          } else {
+                            navigate(`/dashboard/${site.id}`, { state: { viewMode: 'notifications' } });
+                          }
+                      }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: '0.5rem',
                         padding: '0.4rem 0.5rem', borderRadius: '4px',
                         cursor: 'pointer',
                         fontSize: '0.85rem',
-                        color: viewMode === 'instructions' ? themeColor : '#9ca3af',
-                        background: viewMode === 'instructions' ? hexToRgba(themeColor, 0.1) : 'transparent',
+                        color: (viewMode === 'notifications' && isActiveSite) ? themeColor : '#9ca3af',
+                        background: (viewMode === 'notifications' && isActiveSite) ? hexToRgba(themeColor, 0.1) : 'transparent',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <Bell size={14} />
+                      <span>Notificações</span>
+                    </div>
+
+                    {/* 5. Monitoramento */}
+                    <div 
+                      onClick={() => { 
+                          navigate(`/dashboard/${site.id}/monitoring`);
+                      }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        padding: '0.4rem 0.5rem', borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        color: (viewMode === 'monitoring' && isActiveSite) ? themeColor : '#9ca3af',
+                        background: (viewMode === 'monitoring' && isActiveSite) ? hexToRgba(themeColor, 0.1) : 'transparent',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <Eye size={14} />
+                      <span>Monitoramento</span>
+                    </div>
+
+                    {/* 5.5. Organização (Kanban) */}
+                    <div 
+                      onClick={() => { 
+                          navigate(`/dashboard/${site.id}/kanban`);
+                      }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        padding: '0.4rem 0.5rem', borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        color: (viewMode === 'kanban' && isActiveSite) ? themeColor : '#9ca3af',
+                        background: (viewMode === 'kanban' && isActiveSite) ? hexToRgba(themeColor, 0.1) : 'transparent',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <Trello size={14} />
+                      <span>Organização</span>
+                    </div>
+
+                    {/* 6. Cloaker */}
+                    <div 
+                      onClick={() => { 
+                          navigate(`/dashboard/${site.id}/cloaker`);
+                      }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        padding: '0.4rem 0.5rem', borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        color: (viewMode === 'cloaker' && isActiveSite) ? themeColor : '#9ca3af',
+                        background: (viewMode === 'cloaker' && isActiveSite) ? hexToRgba(themeColor, 0.1) : 'transparent',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <Shield size={14} />
+                      <span>Cloaker</span>
+                    </div>
+
+                    {/* 7. Instruções */}
+                    <div 
+                      onClick={() => { 
+                          if (isActiveSite) {
+                            setViewMode('instructions'); 
+                            setSelectedSlug(null); 
+                          } else {
+                            navigate(`/dashboard/${site.id}`, { state: { viewMode: 'instructions' } });
+                          }
+                      }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        padding: '0.4rem 0.5rem', borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        color: (viewMode === 'instructions' && isActiveSite) ? themeColor : '#9ca3af',
+                        background: (viewMode === 'instructions' && isActiveSite) ? hexToRgba(themeColor, 0.1) : 'transparent',
                         transition: 'all 0.2s'
                       }}
                     >
@@ -595,10 +912,16 @@ function Dashboard({ user, onLogout }) {
           <div style={{ marginTop: 'auto' }}>
             <div 
                 className={`nav-item ${viewMode === 'settings' ? 'active' : ''}`}
-                onClick={() => siteId && setViewMode('settings')}
+                onClick={() => {
+                    if (siteId) {
+                        navigate(`/dashboard/${siteId}/settings`);
+                    } else {
+                        navigate('/settings');
+                    }
+                }}
                 style={{
-                    cursor: siteId ? 'pointer' : 'not-allowed',
-                    opacity: siteId ? 1 : 0.5,
+                    cursor: 'pointer',
+                    opacity: 1,
                     background: viewMode === 'settings' ? hexToRgba(themeColor, 0.1) : 'transparent',
                     color: viewMode === 'settings' ? themeColor : '#9ca3af'
                 }}
@@ -629,7 +952,7 @@ function Dashboard({ user, onLogout }) {
             {siteId ? (isConnected ? 'Conectado' : 'Desconectado') : 'Online'}
           </div>
           <div style={{ fontSize: '0.7rem', color: '#4b5563', marginTop: '0.5rem' }}>
-             v1.0.2 {showDebug ? '(Debug On)' : ''}
+             v1.0.3 {showDebug ? '(Debug On)' : ''}
           </div>
         </div>
       </aside>
@@ -640,8 +963,12 @@ function Dashboard({ user, onLogout }) {
         {/* Top Bar */}
         <header className="top-bar">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ color: '#9ca3af' }}>Dashboards</span>
-            <span style={{ color: '#2a2e3b' }}>/</span>
+            {siteId && (
+              <>
+                <span style={{ color: '#9ca3af' }}>Dashboards</span>
+                <span style={{ color: '#2a2e3b' }}>/</span>
+              </>
+            )}
             <span style={{ fontWeight: '500', color: 'white' }}>{siteId ? (sites.find(s => s.id === siteId)?.name || siteId) : 'Visão Geral'}</span>
             {siteId && (
                <span style={{ 
@@ -683,8 +1010,55 @@ function Dashboard({ user, onLogout }) {
 
         <div className="content-scroll">
           
-          {!siteId ? (
+          {viewMode === 'plans' ? (
+            <Plans themeColor={themeColor} />
+          ) : !siteId && viewMode !== 'cloaker' && viewMode !== 'settings' ? (
             <SitesList onSitesUpdate={fetchSites} />
+          ) : viewMode === 'notifications' ? (
+            <DashboardNotifications 
+              themeColor={themeColor} 
+              userPlan={user?.plan || 'free'} 
+              siteId={siteId}
+              site={sites.find(s => String(s.id) === String(siteId))}
+            />
+          ) : viewMode === 'monitoring' ? (
+            <DashboardMonitoring 
+              themeColor={themeColor} 
+              userPlan={user?.plan || 'free'} 
+              siteId={siteId}
+              site={sites.find(s => String(s.id) === String(siteId))}
+            />
+          ) : viewMode === 'kanban' ? (
+            siteId ? (
+                <DashboardKanban
+                  themeColor={themeColor}
+                  siteId={siteId}
+                />
+            ) : (
+                <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Trello size={48} color="#2a2e3b" />
+                    <h3 style={{ marginTop: '1rem', color: '#9ca3af' }}>Selecione um site para ver o quadro</h3>
+                </div>
+            )
+          ) : viewMode === 'cloaker' ? (
+            siteId ? (
+                <DashboardCloaker 
+                  themeColor={themeColor} 
+                  userPlan={user?.plan || 'free'} 
+                  siteId={siteId}
+                  site={sites.find(s => String(s.id) === String(siteId))}
+                />
+            ) : (
+                <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Shield size={64} color="#9ca3af" style={{ marginBottom: '1rem', opacity: 0.5 }} />
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Cloaker</h2>
+                    <p style={{ color: 'var(--text-secondary)', textAlign: 'center', maxWidth: '400px' }}>
+                        O Cloaker permite proteger seus links e filtrar tráfego indesejado.
+                        <br/><br/>
+                        <strong>Selecione um dashboard no menu lateral para configurar o Cloaker.</strong>
+                    </p>
+                </div>
+            )
           ) : viewMode === 'settings' ? (
             <div style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
                 <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Configurações</h2>
@@ -1244,6 +1618,20 @@ function Dashboard({ user, onLogout }) {
                     <div className="gamified-select-container" style={{ margin: 0 }}>
                         <select 
                             className="gamified-filter"
+                            value={selectedSlug || ''}
+                            onChange={(e) => setSelectedSlug(e.target.value || null)}
+                            style={{ minWidth: '150px' }}
+                        >
+                            <option value="">Todos os Slugs</option>
+                            {(sites.find(s => String(s.id) === String(siteId))?.slugs || []).map(slug => (
+                                <option key={slug} value={slug}>/{slug}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="gamified-select-container" style={{ margin: 0 }}>
+                        <select 
+                            className="gamified-filter"
                             value={siteId}
                             onChange={(e) => navigate(`/dashboard/${e.target.value}`)}
                         >
@@ -1283,6 +1671,7 @@ function Dashboard({ user, onLogout }) {
                         <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: '600' }}>DATA</th>
                         <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: '600' }}>DIA</th>
                         <th style={{ padding: '1rem', textAlign: 'right', color: 'var(--text-secondary)', fontWeight: '600' }}>VISUALIZAÇÕES</th>
+                        <th style={{ padding: '1rem', textAlign: 'right', color: 'var(--text-secondary)', fontWeight: '600' }}>BOTS</th>
                         <th style={{ padding: '1rem', textAlign: 'right', color: 'var(--text-secondary)', fontWeight: '600' }}>MÉDIA (s)</th>
                       </tr>
                     </thead>
@@ -1298,12 +1687,14 @@ function Dashboard({ user, onLogout }) {
                         return days.map((date, index) => {
                             const dateStr = date.toISOString().split('T')[0];
                             const found = dailyStats.find(s => s.date === dateStr);
+                            const botFound = dailyBotStats.find(s => s.date === dateStr);
                             
                             return (
                                 <tr key={index} style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>
                                     <td style={{ padding: '1rem' }}>{date.toLocaleDateString('pt-BR')}</td>
                                     <td style={{ padding: '1rem' }}>{date.toLocaleDateString('pt-BR', { weekday: 'long' }).replace(/^\w/, c => c.toUpperCase())}</td>
                                     <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 'bold' }}>{found ? found.views : 0}</td>
+                                    <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 'bold', color: '#ef4444' }}>{botFound ? botFound.bots : 0}</td>
                                     <td style={{ padding: '1rem', textAlign: 'right' }}>-</td>
                                 </tr>
                             );
@@ -1440,7 +1831,7 @@ function Dashboard({ user, onLogout }) {
                    </div>
                )}
 
-              {!isEditingLayout && currentSite && Array.isArray(currentSite.slugs) && currentSite.slugs.length > 0 && (
+              {!isEditingLayout && currentSite && (
                 <div
                   style={{
                     marginTop: '1rem',
@@ -1463,53 +1854,90 @@ function Dashboard({ user, onLogout }) {
                     Etapas do Funil
                   </span>
 
-                  <button
-                    onClick={() => setSelectedSlug(null)}
-                    style={{
-                      padding: '0.35rem 0.9rem',
-                      borderRadius: '999px',
-                      border: '1px solid ' + (selectedSlug ? '#374151' : themeColor),
-                      background: selectedSlug ? 'transparent' : hexToRgba(themeColor, 0.15),
-                      color: selectedSlug ? '#9ca3af' : themeColor,
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.4rem',
-                      transition: 'all 0.15s'
-                    }}
-                  >
-                    <BarChart2 size={14} />
-                    Todas (Resumo)
-                  </button>
+                  {Array.isArray(currentSite.slugs) && currentSite.slugs.length > 0 ? (
+                    <>
+                      <button
+                        onClick={() => setSelectedSlug(null)}
+                        style={{
+                          padding: '0.35rem 0.9rem',
+                          borderRadius: '999px',
+                          border: '1px solid ' + (selectedSlug ? '#374151' : themeColor),
+                          background: selectedSlug ? 'transparent' : hexToRgba(themeColor, 0.15),
+                          color: selectedSlug ? '#9ca3af' : themeColor,
+                          fontSize: '0.8rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          transition: 'all 0.15s'
+                        }}
+                      >
+                        <BarChart2 size={14} />
+                        Todas (Resumo)
+                      </button>
 
-                  {currentSite.slugs.map((slug) => (
-                    <button
-                      key={slug}
-                      onClick={() => {
-                        setSelectedSlug(slug);
-                        if (viewMode !== 'stats') {
-                          setViewMode('stats');
-                        }
-                      }}
-                      style={{
-                        padding: '0.35rem 0.9rem',
-                        borderRadius: '999px',
-                        border: '1px solid ' + (selectedSlug === slug ? themeColor : '#374151'),
-                        background: selectedSlug === slug ? hexToRgba(themeColor, 0.15) : 'transparent',
-                        color: selectedSlug === slug ? themeColor : '#9ca3af',
-                        fontSize: '0.8rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        transition: 'all 0.15s'
-                      }}
-                    >
-                      <Layers size={14} />
-                      /{slug}
-                    </button>
-                  ))}
+                      {currentSite.slugs.map((slug) => (
+                        <button
+                          key={slug}
+                          onClick={() => {
+                            setSelectedSlug(slug);
+                            if (viewMode !== 'stats') {
+                              setViewMode('stats');
+                            }
+                          }}
+                          style={{
+                            padding: '0.35rem 0.9rem',
+                            borderRadius: '999px',
+                            border: '1px solid ' + (selectedSlug === slug ? themeColor : '#374151'),
+                            background: selectedSlug === slug ? hexToRgba(themeColor, 0.15) : 'transparent',
+                            color: selectedSlug === slug ? themeColor : '#9ca3af',
+                            fontSize: '0.8rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            transition: 'all 0.15s'
+                          }}
+                        >
+                          <Layers size={14} />
+                          /{slug}
+                        </button>
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      <span
+                        style={{
+                          fontSize: '0.8rem',
+                          color: '#9ca3af'
+                        }}
+                      >
+                        Nenhuma etapa configurada para este domínio.
+                      </span>
+                      <button
+                        onClick={() => {
+                          setViewMode('settings');
+                          setSettingsTab('config');
+                        }}
+                        style={{
+                          padding: '0.35rem 0.9rem',
+                          borderRadius: '999px',
+                          border: '1px solid ' + themeColor,
+                          background: hexToRgba(themeColor, 0.15),
+                          color: themeColor,
+                          fontSize: '0.8rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          transition: 'all 0.15s'
+                        }}
+                      >
+                        <Layers size={14} />
+                        Configurar slugs do funil
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
 

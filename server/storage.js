@@ -4,11 +4,26 @@ class Storage {
   async getSite(id) { throw new Error('Method not implemented'); }
   async createSite(site) { throw new Error('Method not implemented'); }
   async deleteSite(id) { throw new Error('Method not implemented'); }
-  async getDailyStats(siteId, days = 30) {
+  async updateSite(id, data) { throw new Error('Method not implemented'); }
+  async getDailyStats(siteId, days = 30, slug = null) {
     const stats = this.dailyStats.get(siteId) || {};
-    // Return array of { date: 'YYYY-MM-DD', views: N }
-    // We can filter for last N days if needed, or return all
-    return Object.entries(stats).map(([date, views]) => ({ date, views }));
+    const entries = Object.entries(stats);
+    
+    return entries.map(([date, data]) => {
+      let views = 0;
+      if (typeof data === 'number') {
+        // Legacy format: only total available
+        views = slug ? 0 : data; 
+      } else {
+        // New format: object with total and slugs
+        if (slug) {
+          views = (data.slugs && data.slugs[slug]) || 0;
+        } else {
+          views = data.total || 0;
+        }
+      }
+      return { date, views };
+    });
   }
 
   async getHistory(siteId) { throw new Error('Method not implemented'); }
@@ -16,15 +31,17 @@ class Storage {
   async createUser(username, password) { throw new Error('Method not implemented'); }
   async validateUser(username, password) { throw new Error('Method not implemented'); }
   async updateUserPassword(username, currentPassword, newPassword) { throw new Error('Method not implemented'); }
+  async updateSiteUptimeStatus(siteId, status, lastCheck) { throw new Error('Method not implemented'); }
 }
 
 class LocalStorage extends Storage {
-  constructor() {
+  constructor(dataFile = 'data.json') {
     super();
     this.sites = new Map();
     this.siteHistory = new Map(); // Store history: { minutes: [], hours: [], days: [] }
     this.dailyStats = new Map(); // Store daily stats: { 'YYYY-MM-DD': count }
-    this.dataFile = 'data.json';
+    this.kanbanBoards = new Map(); // Store kanban boards
+    this.dataFile = dataFile;
     
     // Load data from file if exists
     if (fs.existsSync(this.dataFile)) {
@@ -33,6 +50,7 @@ class LocalStorage extends Storage {
         if (data.sites) this.sites = new Map(data.sites);
         if (data.siteHistory) this.siteHistory = new Map(data.siteHistory);
         if (data.dailyStats) this.dailyStats = new Map(data.dailyStats);
+        if (data.kanbanBoards) this.kanbanBoards = new Map(data.kanbanBoards);
       } catch (err) {
         console.error('Error loading data file:', err);
       }
@@ -62,6 +80,7 @@ class LocalStorage extends Storage {
       sites: Array.from(this.sites.entries()),
       siteHistory: Array.from(this.siteHistory.entries()),
       dailyStats: Array.from(this.dailyStats.entries()),
+      kanbanBoards: Array.from(this.kanbanBoards.entries()),
       users: Array.from(this.users.entries())
     };
     fs.writeFileSync(this.dataFile, JSON.stringify(data, null, 2));
@@ -91,7 +110,30 @@ class LocalStorage extends Storage {
     return deleted;
   }
 
-  async incrementTotalViews(siteId) {
+  async updateSite(siteId, data) {
+    const site = this.sites.get(siteId);
+    if (!site) return null;
+    if (typeof data.name === 'string') {
+      site.name = data.name;
+    }
+    if (typeof data.domain === 'string') {
+      site.domain = data.domain;
+    }
+    if (Array.isArray(data.slugs)) {
+      site.slugs = data.slugs;
+    }
+    if (data.uptime_config) {
+      site.uptime_config = data.uptime_config;
+    }
+    if (data.ntfy_config) {
+      site.ntfy_config = data.ntfy_config;
+    }
+    this.sites.set(siteId, site);
+    this.save();
+    return site;
+  }
+
+  async incrementTotalViews(siteId, slug = null) {
     const site = this.sites.get(siteId);
     if (site) {
       // Increment total views
@@ -101,11 +143,83 @@ class LocalStorage extends Storage {
       // Increment daily views
       const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
       let stats = this.dailyStats.get(siteId) || {};
-      stats[today] = (stats[today] || 0) + 1;
+      
+      // Migration/Robustness: Ensure today's entry is an object structure if we want to store slug details
+      // Current structure might be: stats[today] = number
+      // New structure: stats[today] = { total: number, slugs: { 'slugname': count } }
+      
+      let entry = stats[today];
+      if (typeof entry === 'number') {
+        entry = { total: entry, slugs: {} };
+      } else if (!entry) {
+        entry = { total: 0, slugs: {} };
+      }
+      
+      entry.total += 1;
+      
+      if (slug) {
+        if (!entry.slugs) entry.slugs = {};
+        entry.slugs[slug] = (entry.slugs[slug] || 0) + 1;
+      }
+      
+      stats[today] = entry;
       this.dailyStats.set(siteId, stats);
 
       this.save();
     }
+  }
+
+  async incrementBotViews(siteId) {
+    const site = this.sites.get(siteId);
+    if (site) {
+      const today = new Date().toISOString().split('T')[0];
+      let stats = this.dailyStats.get(siteId) || {};
+      let entry = stats[today];
+      if (typeof entry === 'number') {
+        entry = { total: entry, slugs: {}, bots: 0 };
+      } else if (!entry) {
+        entry = { total: 0, slugs: {}, bots: 0 };
+      } else {
+        if (entry.bots === undefined) entry.bots = 0;
+      }
+      entry.bots += 1;
+      stats[today] = entry;
+      this.dailyStats.set(siteId, stats);
+      this.save();
+    }
+  }
+
+  async getDailyStats(siteId, days = 30, slug = null) {
+    const stats = this.dailyStats.get(siteId) || {};
+    const entries = Object.entries(stats);
+    
+    return entries.map(([date, data]) => {
+      let views = 0;
+      if (typeof data === 'number') {
+        // Legacy format: only total available
+        views = slug ? 0 : data; 
+      } else {
+        // New format: object with total and slugs
+        if (slug) {
+          views = (data.slugs && data.slugs[slug]) || 0;
+        } else {
+          views = data.total || 0;
+        }
+      }
+      return { date, views };
+    });
+  }
+
+  async getDailyBotStats(siteId, days = 30) {
+    const stats = this.dailyStats.get(siteId) || {};
+    const entries = Object.entries(stats);
+    return entries.map(([date, data]) => {
+      if (typeof data === 'number') {
+        return { date, bots: 0 };
+      } else {
+        return { date, bots: data.bots || 0 };
+      }
+    });
   }
 
   async updateSiteTheme(siteId, color) {
@@ -128,6 +242,16 @@ class LocalStorage extends Storage {
       return site;
     }
     return null;
+  }
+
+  async updateSiteUptimeStatus(siteId, status, lastCheck) {
+    const site = this.sites.get(siteId);
+    if (site && site.uptime_config) {
+      site.uptime_config.status = status;
+      site.uptime_config.last_check = lastCheck;
+      this.sites.set(siteId, site);
+      this.save();
+    }
   }
 
   async getHistory(siteId) {
@@ -175,6 +299,31 @@ class LocalStorage extends Storage {
       this.users.set(username, user);
       this.save();
       return true;
+  }
+
+  async getKanbanBoard(siteId) {
+    let board = this.kanbanBoards.get(siteId);
+    if (!board) {
+        // Default Board Structure
+        board = {
+            tasks: {},
+            columns: {
+                'todo': { id: 'todo', title: 'A Fazer', taskIds: [] },
+                'in-progress': { id: 'in-progress', title: 'Em Progresso', taskIds: [] },
+                'done': { id: 'done', title: 'Concluído', taskIds: [] }
+            },
+            columnOrder: ['todo', 'in-progress', 'done']
+        };
+        this.kanbanBoards.set(siteId, board);
+        this.save();
+    }
+    return board;
+  }
+
+  async updateKanbanBoard(siteId, boardData) {
+      this.kanbanBoards.set(siteId, boardData);
+      this.save();
+      return boardData;
   }
 }
 
@@ -264,6 +413,29 @@ class SupabaseStorage extends Storage {
     return true;
   }
 
+  async updateSite(siteId, data) {
+    const payload = {};
+    if (typeof data.name === 'string') {
+      payload.name = data.name;
+    }
+    if (typeof data.domain === 'string') {
+      payload.domain = data.domain;
+    }
+    if (Array.isArray(data.slugs)) {
+      payload.slugs = data.slugs;
+    }
+
+    const { data: updated, error } = await this.supabase
+      .from('sites')
+      .update(payload)
+      .eq('id', siteId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return updated;
+  }
+
   async incrementTotalViews(siteId) {
     const { error } = await this.supabase.rpc('increment_views', { site_id_param: siteId });
     
@@ -295,6 +467,23 @@ class SupabaseStorage extends Storage {
       if (data) {
         await this.supabase.from('sites').update({ total_views: (data.total_views || 0) + 1 }).eq('id', siteId);
       }
+    }
+  }
+
+  async incrementBotViews(siteId) {
+    const today = new Date().toISOString().split('T')[0];
+    const { data: currentDay } = await this.supabase
+      .from('daily_site_stats')
+      .select('bots')
+      .eq('site_id', siteId)
+      .eq('date', today)
+      .single();
+    const newBots = (currentDay?.bots || 0) + 1;
+    const { error: upsertError } = await this.supabase
+      .from('daily_site_stats')
+      .upsert({ site_id: siteId, date: today, bots: newBots }, { onConflict: 'site_id, date' });
+    if (upsertError) {
+      console.error('Error updating daily_site_stats.bots:', upsertError.message);
     }
   }
 
@@ -338,6 +527,22 @@ class SupabaseStorage extends Storage {
       return [];
     }
     return data || [];
+  }
+
+  async getDailyBotStats(siteId, days = 30) {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    const { data, error } = await this.supabase
+      .from('daily_site_stats')
+      .select('date, bots')
+      .eq('site_id', siteId)
+      .gte('date', startDate.toISOString().split('T')[0])
+      .order('date', { ascending: true });
+    if (error) {
+      console.error('Error fetching daily bot stats:', error.message);
+      return [];
+    }
+    return (data || []).map(row => ({ date: row.date, bots: row.bots || 0 }));
   }
 
   async getHistory(siteId) {

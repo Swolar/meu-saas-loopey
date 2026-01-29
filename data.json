@@ -1,0 +1,15 @@
+{
+  "sites": [],
+  "siteHistory": [],
+  "dailyStats": [],
+  "users": [
+    [
+      "testuser",
+      {
+        "username": "testuser",
+        "password": "$2b$10$cDmHi5lKJwPQURbjftVPTeZiJAylY6l/vbwCL0gpmAkBHRiyz9NQ.",
+        "createdAt": 1769273984981
+      }
+    ]
+  ]
+}

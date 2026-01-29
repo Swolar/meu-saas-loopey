@@ -58,6 +58,34 @@ function App() {
           path="/dashboard/:siteId" 
           element={user ? <Dashboard user={user} onLogout={handleLogout} /> : <Navigate to="/login" />} 
         />
+        <Route 
+          path="/dashboard/:siteId/cloaker" 
+          element={user ? <Dashboard user={user} onLogout={handleLogout} initialView="cloaker" /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/dashboard/:siteId/settings" 
+          element={user ? <Dashboard user={user} onLogout={handleLogout} initialView="settings" /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/dashboard/:siteId/monitoring" 
+          element={user ? <Dashboard user={user} onLogout={handleLogout} initialView="monitoring" /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/dashboard/:siteId/kanban" 
+          element={user ? <Dashboard user={user} onLogout={handleLogout} initialView="kanban" /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/cloaker" 
+          element={user ? <Dashboard user={user} onLogout={handleLogout} initialView="cloaker" /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/settings" 
+          element={user ? <Dashboard user={user} onLogout={handleLogout} initialView="settings" /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/plans" 
+          element={user ? <Dashboard user={user} onLogout={handleLogout} initialView="plans" /> : <Navigate to="/login" />} 
+        />
       </Routes>
     </Router>
   );
