@@ -8,7 +8,7 @@ import {
   Users, Clock, Smartphone, Monitor,
   Maximize2, Minimize2,
   User, Shield, MessageSquare, Moon, Sun, Lock,
-  FileText, BookOpen, Layers, BarChart2, ChevronDown, ChevronRight, CreditCard, Bell, Bot, Trello
+  FileText, BookOpen, Layers, BarChart2, ChevronDown, ChevronRight, CreditCard, Bell, Bot, Trello, Hammer, Store, List, Menu
 } from 'lucide-react';
 import SitesList from './SitesList';
 import Plans from './Plans';
@@ -16,6 +16,7 @@ import DashboardNotifications from './DashboardNotifications';
 import DashboardMonitoring from './DashboardMonitoring';
 import DashboardKanban from './DashboardKanban';
 import DashboardCloaker from './DashboardCloaker';
+import DashboardBuilder from './DashboardBuilder';
 import { StatCard, TrafficChart, DeviceChart, TopPagesTable } from './DashboardWidgets';
 import { getApiUrl, SOCKET_URL, authFetch } from './config';
 
@@ -88,6 +89,7 @@ function Dashboard({ user, onLogout, initialView }) {
   });
   const [showDebug, setShowDebug] = useState(false);
   const [expandedSites, setExpandedSites] = useState({});
+  const [expandedBuilder, setExpandedBuilder] = useState(true); // Default open
   const lastNotificationRef = useRef(Date.now());
   const statsRef = useRef(stats);
 
@@ -634,16 +636,155 @@ function Dashboard({ user, onLogout, initialView }) {
         <nav className="sidebar-nav">
           <Link 
             to="/" 
-            className={`nav-item ${!siteId && viewMode !== 'plans' ? 'active' : ''}`}
+            className={`nav-item ${!siteId && viewMode !== 'plans' && !viewMode.startsWith('builder') ? 'active' : ''}`}
             style={{ 
-              background: !siteId && viewMode !== 'plans' ? hexToRgba(DEFAULT_THEME, 0.1) : 'transparent',
-              color: !siteId && viewMode !== 'plans' ? DEFAULT_THEME : '#9ca3af'
+              background: !siteId && viewMode !== 'plans' && !viewMode.startsWith('builder') ? hexToRgba(DEFAULT_THEME, 0.1) : 'transparent',
+              color: !siteId && viewMode !== 'plans' && !viewMode.startsWith('builder') ? DEFAULT_THEME : '#9ca3af'
             }}
             onClick={() => setViewMode('stats')}
           >
             <LayoutDashboard size={20} />
             <span>Visão Geral</span>
           </Link>
+
+          {/* Loja Virtual (Builder) */}
+          <div>
+            <div 
+              className={`nav-item ${viewMode.startsWith('builder') ? 'active' : ''}`}
+              style={{ 
+                justifyContent: 'space-between',
+                paddingLeft: '1rem',
+                background: viewMode.startsWith('builder') ? hexToRgba(DEFAULT_THEME, 0.1) : 'transparent',
+                color: viewMode.startsWith('builder') ? DEFAULT_THEME : '#9ca3af',
+                marginBottom: (viewMode.startsWith('builder') || expandedBuilder) ? '0.25rem' : '0.5rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                paddingRight: '0.5rem'
+              }}
+            >
+                <Link 
+                  to="/builder" 
+                  onClick={() => {
+                      setViewMode('builder-themes');
+                      setSelectedSlug(null);
+                      if (!expandedBuilder) setExpandedBuilder(true);
+                  }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, color: 'inherit', textDecoration: 'none' }}
+                >
+                  <Store size={20} />
+                  <span style={{ fontWeight: '500' }}>Loja Virtual</span>
+                  <span style={{ 
+                      fontSize: '0.6rem', 
+                      background: '#f59e0b', 
+                      color: 'black', 
+                      padding: '0.1rem 0.3rem', 
+                      borderRadius: '4px',
+                      fontWeight: 'bold',
+                      marginLeft: '0.3rem'
+                  }}>BETA</span>
+                </Link>
+
+                <div 
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setExpandedBuilder(!expandedBuilder);
+                    }}
+                    style={{ padding: '4px', display: 'flex', alignItems: 'center', borderRadius: '4px' }}
+                >
+                    {expandedBuilder ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                </div>
+            </div>
+
+            {expandedBuilder && (
+                <div style={{ marginLeft: '1rem', borderLeft: `1px solid ${hexToRgba(DEFAULT_THEME, 0.2)}`, paddingLeft: '0.5rem', marginTop: '0.25rem', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    {/* Temas */}
+                    <div 
+                      onClick={() => { 
+                          setViewMode('builder-themes');
+                          setSelectedSlug(null);
+                          navigate('/builder');
+                      }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        padding: '0.4rem 0.5rem', borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        color: (viewMode === 'builder-themes' || viewMode === 'builder') ? DEFAULT_THEME : '#9ca3af',
+                        background: (viewMode === 'builder-themes' || viewMode === 'builder') ? hexToRgba(DEFAULT_THEME, 0.1) : 'transparent',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <Palette size={14} />
+                      <span>Temas</span>
+                    </div>
+
+                    {/* Páginas */}
+                    <div 
+                      onClick={() => { 
+                          setViewMode('builder-pages');
+                          setSelectedSlug(null);
+                          navigate('/builder');
+                      }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        padding: '0.4rem 0.5rem', borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        color: viewMode === 'builder-pages' ? DEFAULT_THEME : '#9ca3af',
+                        background: viewMode === 'builder-pages' ? hexToRgba(DEFAULT_THEME, 0.1) : 'transparent',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <FileText size={14} />
+                      <span>Páginas</span>
+                    </div>
+
+                    {/* Menus */}
+                    <div 
+                      onClick={() => { 
+                          setViewMode('builder-menus');
+                          setSelectedSlug(null);
+                          navigate('/builder');
+                      }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        padding: '0.4rem 0.5rem', borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        color: viewMode === 'builder-menus' ? DEFAULT_THEME : '#9ca3af',
+                        background: viewMode === 'builder-menus' ? hexToRgba(DEFAULT_THEME, 0.1) : 'transparent',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <Menu size={14} />
+                      <span>Menus</span>
+                    </div>
+
+                    {/* Configurações */}
+                    <div 
+                      onClick={() => { 
+                          setViewMode('builder-settings');
+                          setSelectedSlug(null);
+                          navigate('/builder');
+                      }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        padding: '0.4rem 0.5rem', borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        color: viewMode === 'builder-settings' ? DEFAULT_THEME : '#9ca3af',
+                        background: viewMode === 'builder-settings' ? hexToRgba(DEFAULT_THEME, 0.1) : 'transparent',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <Settings size={14} />
+                      <span>Configurações</span>
+                    </div>
+                </div>
+            )}
+          </div>
 
           <Link 
             to="/plans" 
@@ -1012,6 +1153,8 @@ function Dashboard({ user, onLogout, initialView }) {
           
           {viewMode === 'plans' ? (
             <Plans themeColor={themeColor} />
+          ) : viewMode.startsWith('builder') ? (
+            <DashboardBuilder themeColor={themeColor} viewMode={viewMode} />
           ) : !siteId && viewMode !== 'cloaker' && viewMode !== 'settings' ? (
             <SitesList onSitesUpdate={fetchSites} />
           ) : viewMode === 'notifications' ? (
