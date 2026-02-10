@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import Login from './Login';
+import TemplateEditor from './TemplateEditor';
 import { getApiUrl, authFetch } from './config';
 
 function App() {
@@ -85,6 +86,14 @@ function App() {
         <Route 
           path="/plans" 
           element={user ? <Dashboard user={user} onLogout={handleLogout} initialView="plans" /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/builder" 
+          element={user ? <Dashboard user={user} onLogout={handleLogout} initialView="builder" /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/builder/edit/:templateId" 
+          element={user ? <TemplateEditor /> : <Navigate to="/login" />} 
         />
       </Routes>
     </Router>

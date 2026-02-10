@@ -1,0 +1,1229 @@
+/* Configurações Globais */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    /* Define a fonte Poppins como padrão para toda a página */
+    font-family: 'Poppins', sans-serif;
+    background-color: #f4f4f4;
+    padding-bottom: 190px;
+    /* Apenas para visualização */
+}
+
+/* ========= ESTILOS DO CABEÇALHO ========= */
+.header {
+    display: flex;
+    justify-content: space-between;
+    /* Itens nas extremidades */
+    align-items: center;
+    /* Centraliza verticalmente */
+
+    padding: 10px 10px;
+    /* Espaçamento interno (15px em cima/baixo, 20px nas laterais) */
+    background-color: #ffffff;
+    border-bottom: 1px solid #999999;
+    /* Linha cinza na parte inferior */
+}
+
+/* Estilo do Logo */
+.logo {
+    width: 110px;
+    /* Tamanho do logo conforme solicitado */
+    height: auto;
+    /* Mantém a proporção */
+}
+
+/* Estilo do container do Ícone de Menu */
+.menu-icon {
+    display: flex;
+    flex-direction: column;
+    /* Organiza as barras uma sobre a outra */
+    justify-content: space-between;
+    width: 24px;
+    /* Largura do ícone */
+    height: 18px;
+    /* Altura do ícone */
+    cursor: pointer;
+    /* Muda o cursor para uma mãozinha */
+}
+
+/* Estilo de cada barra do ícone */
+.menu-icon .bar {
+    height: 3px;
+    /* Espessura da barra */
+    width: 100%;
+    background-color: #333333;
+    /* Cor das barras */
+    border-radius: 10px;
+}
+
+
+/* ========= ESTILOS DA SEÇÃO PRINCIPAL ========= */
+main {
+    /* Cor de fundo cinza clara para toda a área principal */
+    background-color: #F4F4F4;
+    padding: 10px;
+    /* Espaçamento interno */
+}
+
+/* Container das Tags */
+.tags-container {
+    display: flex;
+    /* Espaço entre as tags */
+    margin-bottom: 8px;
+    margin-left: 5px;
+}
+
+.tag-item {
+    display: flex;
+    align-items: center;
+    background-color: #F4F4F4;
+    border: 1px solid #c5c5c5;
+    padding: 3px 10px;
+    font-size: 10px;
+    color: #22c1c3;
+}
+
+.tag-item svg {
+    width: 14px;
+    /* Tamanho do ícone */
+    height: 14px;
+    margin-right: 6px;
+    /* Espaço entre o ícone e o texto */
+    fill: #22c1c3;
+    /* Cor do ícone */
+}
+
+/* Título Principal */
+.titulo-principal {
+    color: #2A2A2A;
+    font-size: 24px;
+    /* Negrito */
+    line-height: 26px;
+    /* Altura da linha para melhor leitura */
+    margin-bottom: 15px;
+    font-weight: 400;
+}
+
+/* Subtítulo */
+.subtitulo {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 25px;
+}
+
+.link-azul {
+    color: #22c1c3;
+    text-decoration: none;
+    /* Remove sublinhado */
+    font-weight: 700;
+}
+
+/* Imagem que substitui o vídeo */
+.imagem-video {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    /* Bordas arredondadas */
+    display: block;
+    /* Evita espaços indesejados abaixo da imagem */
+    margin-bottom: 20px;
+}
+
+.heart-video {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    width: 48px;
+    text-align: center;
+    height: 48px;
+    display: flex;
+    background-color: #fff;
+    border-radius: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+.heart-video svg {
+    width: 24px;
+    height: 24px;
+    fill: #22c1c3;
+}
+
+/* Caixa de Informação */
+.caixa-info {
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 5px 20px;
+    display: flex;
+    align-items: center;
+    /* Alinha o logo e o texto verticalmente */
+    gap: 15px;
+    /* Espaço entre o logo e o texto */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    /* Sombra suave */
+}
+
+.logo-info {
+    width: 60px;
+    /* Impede que o logo encolha */
+    flex-shrink: 0;
+}
+
+.texto-info p {
+    font-size: 12px;
+    line-height: 1.5;
+    color: #000;
+    margin: 0;
+}
+
+.texto-info p:first-child {
+    margin-bottom: 8px;
+}
+
+.texto-info .texto-azul {
+    color: #22c1c3;
+    font-weight: 700;
+    /* Negrito */
+}
+
+/* ========= ESTILOS DA SEÇÃO STORY ========= */
+.story-section {
+    background-color: #ffffff;
+    padding: 25px 10px;
+    overflow: hidden;
+    /* Previne que elementos saiam da seção */
+}
+
+/* Container dos botões de âncora */
+.story-tabs {
+    display: flex;
+    gap: 8px;
+    /* Espaço entre os botões */
+    margin-top: 10px;
+}
+
+.tab-item {
+    padding: 8px 16px;
+    border-radius: 8px 8px 0px 0px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+    background-color: #e2e2e2;
+    /* Cor para botões inativos */
+}
+
+/* Estilo do botão ativo */
+.tab-item.active {
+    background-color: #fff;
+    /* Azul claro */
+    color: #22c1c3;
+    /* Azul escuro */
+}
+
+/* Título da seção */
+.story-headline {
+    font-size: 16px;
+    color: #000000;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+/* Parágrafos da seção */
+.story-section p {
+    font-size: 14px;
+    color: #434549;
+    line-height: 1.6;
+    margin-bottom: 1em;
+    /* Espaçamento padrão entre parágrafos */
+}
+
+.story-section h3 {
+    font-size: 16px;
+    color: #000;
+    line-height: 1.6;
+    margin-bottom: 1em;
+}
+
+/* Estilos específicos para listas */
+.story-section ul {
+    margin-left: 20px;
+    /* Margem esquerda para os marcadores */
+    margin-bottom: 1em;
+    padding-left: 0;
+    /* Remove padding padrão */
+}
+
+.story-section li {
+    font-size: 14px;
+    color: #434549;
+    line-height: 1.6;
+    margin-bottom: 0.5em;
+    /* Reduz o espaçamento entre itens */
+    position: relative;
+    /* Para controle de posicionamento */
+    list-style-position: inside;
+    /* Coloca os marcadores dentro da lista */
+}
+
+/* Remove marcadores padrão e adiciona marcadores customizados */
+.story-section ul {
+    list-style: none;
+    /* Remove marcadores padrão */
+}
+
+.story-section li::before {
+    content: "•";
+    /* Marcador customizado */
+    color: #434549;
+    /* Cor azul para o marcador */
+    font-weight: bold;
+    display: inline-block;
+    width: 1em;
+    margin-left: -1em;
+    /* Alinha o marcador */
+    position: relative;
+}
+
+/* Botão de Doação - usando exatamente o CSS que você forneceu */
+.donate-button {
+    /* Estilos do seu CSS */
+    font-family: "Poppins", Sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 13px;
+    letter-spacing: 0.4px;
+    fill: #FFFFFF;
+    color: #FFFFFF;
+    background-color: #1e5e3f;
+    border-radius: 10px;
+    padding: 11px 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    /* Espaço entre o coração e o texto */
+    border: none;
+    cursor: pointer;
+    /* Faz o botão ocupar a largura toda */
+    margin: 15px 0;
+    /* Espaçamento acima e abaixo do botão */
+}
+
+.donate-button svg {
+    width: 16px;
+    height: auto;
+}
+
+.divider-line {
+    border-top: 1px solid #e5e5e5;
+    width: 100%;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+/* ========= ESTILOS DA SEÇÃO DONATIONS (VERSÃO CORRETA) ========= */
+.donations-feed {
+    background-color: #ffffff;
+    padding: 20px 10px;
+}
+
+.feed-tab {
+    display: inline-block;
+    /* Para que o padding e o background funcionem */
+    background-color: #ffffff;
+    padding: 8px 16px;
+    border-radius: 8px 8px 0 0;
+    /* Arredonda apenas os cantos de cima */
+    font-size: 14px;
+    font-weight: 500;
+    color: #22c1c3;
+
+    border: 1px solid #efefef;
+    border-bottom: none;
+}
+
+.feed-content {
+    background-color: #fff;
+}
+
+.feed-headline {
+    font-size: 14px;
+    font-weight: 600;
+    color: #000;
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.donations-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.donor-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    /* Espaço entre a imagem e o texto */
+    padding: 8px 0;
+    /* Espaçamento vertical */
+    border-bottom: 1px solid #f0f0f0;
+    /* Linha divisória fina */
+}
+
+.donor-avatar {
+    /* Tamanho da imagem conforme solicitado */
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    /* Imagem redonda */
+    object-fit: cover;
+    /* Garante que a imagem preencha o círculo */
+    flex-shrink: 0;
+}
+
+.donor-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.donor-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #22c1c3;
+}
+
+.donation-details {
+    font-size: 13px;
+    color: #777;
+}
+
+.givers-total {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #434549;
+}
+
+.divider-line-v2 {
+    border-top: 1px solid #c7c7c7;
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+/* ========= ESTILOS DA SEÇÃO TESTIMONIALS ========= */
+
+/* Se você renomeou .donations-feed para .feed-section, 
+   o estilo base já será aplicado. */
+
+.feed-content-testimonials {
+    background-color: #fff;
+    padding: 20px 10px;
+}
+
+.feed-subtitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+
+/* Ajusta o texto do comentário */
+.comment-text {
+    font-size: 14px;
+    color: #434549;
+    line-height: 1.5;
+}
+
+/* Ajuste fino para o nome do autor do comentário ficar acima do texto */
+.donor-info .donor-name {
+    margin-bottom: 0px;
+}
+
+.comment-block {
+    display: flex;
+    gap: 10px;
+}
+
+/* ========= ESTILOS DA SEÇÃO #WhyIGave ========= */
+.why-i-gave-section {
+    padding: 0px 0px;
+}
+
+.why-i-gave-section h2 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    margin-top: 10px;
+}
+
+/* O título .section-title já deve estar estilizado, 
+   mas caso queira um estilo específico para este, pode usar:
+   .why-i-gave-section .section-title { ... } */
+
+.testimonial-blocks-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    /* Espaço entre os blocos de comentário */
+}
+
+.testimonial-block {
+    background-color: #ECECEC;
+    padding: 20px;
+}
+
+.quote-text {
+    /* Estilo do texto do depoimento */
+    font-size: 14px;
+    color: #000000;
+    line-height: 1.6;
+
+    /* Estilo da citação com a barra lateral */
+    margin: 0 0 15px 0;
+    /* Remove margem padrão e adiciona espaço abaixo */
+    padding-left: 15px;
+    border-left: 3px solid #22c1c3;
+    /* Barra azul do tema */
+}
+
+/* O estilo para a parte do autor (.donor-item, .donor-avatar, etc.) 
+   já foi criado nas seções anteriores e será reutilizado aqui.
+   Apenas adicionamos uma classe para remover a borda inferior
+   que não é necessária dentro dos blocos. */
+
+.donor-item.no-border {
+    border-bottom: none;
+    padding: 0;
+    /* Remove o padding vertical extra */
+}
+
+
+
+/* ========= ESTILOS DA SEÇÃO CAUSAS APOIADAS ========= */
+.causes-section {
+    padding: 30px 0;
+    /* Espaçamento vertical, sem padding lateral */
+    text-align: left;
+    background-color: #ffffff;
+}
+
+.causes-section .section-title {
+    font-size: 16px;
+    color: #000;
+}
+
+.causes-section .section-subtitle {
+    font-size: 14px;
+    margin-bottom: 30px;
+    margin-top: 10px;
+}
+
+.slider-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slider-container {
+    /* Largura para 3 blocos visíveis */
+    width: calc(123px * 3);
+    overflow: hidden;
+    /* O mais importante: esconde os slides que estão fora */
+}
+
+.slider-track {
+    display: flex;
+    /* Animação suave para o slide */
+    transition: transform 0.5s ease-in-out;
+}
+
+.slide-item {
+    /* Define o tamanho exato de cada bloco */
+    flex: 0 0 123px;
+    height: 80px;
+    /* Altura para centralizar a imagem verticalmente */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    /* Garante que o padding não afete o tamanho */
+    padding: 10px;
+}
+
+.slide-item img {
+    /* Tamanho da imagem dentro do bloco */
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    /* Garante que a imagem caiba sem distorcer */
+}
+
+/* Estilo das setas de navegação */
+.slider-arrow {
+    background-color: transparent;
+    border: none;
+    color: #d4d4d4;
+    /* Cor cinza para botões normais */
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0 10px;
+    outline: none;
+    /* Remove outline padrão */
+}
+
+.slider-arrow:hover {
+    color: #333;
+    /* Cor mais escura no hover */
+}
+
+/* Estilo dos pontos de paginação */
+.slider-dots {
+    text-align: center;
+    padding: 15px 0;
+}
+
+.slider-dot {
+    height: 8px;
+    width: 8px;
+    margin: 0 5px;
+    background-color: #d4d4d4;
+    /* Cor cinza para pontos normais */
+    border-radius: 50%;
+    display: inline-block;
+    cursor: pointer;
+    border: none;
+    /* Remove bordas */
+    outline: none;
+    /* Remove outline */
+}
+
+.slider-dot.active {
+    background-color: #333;
+    /* Cor escura para o ponto ativo */
+}
+
+/* ========= ESTILOS DA SEÇÃO SAFETY GUARANTEE ========= */
+.safety-section {
+    background-color: #1C5E5F;
+    color: #ffffff;
+    padding: 20px 10px;
+}
+
+.safety-container {
+    max-width: 600px;
+    /* Limita a largura para melhor leitura em telas maiores */
+    margin: 0 auto;
+}
+
+.safety-icon svg {
+    width: 42px;
+    height: auto;
+    fill: #1C5E5F;
+    margin-bottom: 10px;
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.safety-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    background: linear-gradient(90deg, #bcdbdb, #bcdbdb, #bcdbdb, #fff);
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.safety-subtitle {
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 10px;
+    opacity: 0.9;
+}
+
+.guarantee-features {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    /* Espaço entre os blocos */
+}
+
+.feature-box {
+    display: flex;
+    align-items: center;
+    /* Alinha no topo para textos longos */
+    gap: 15px;
+    padding: 10px;
+    border-radius: 12px;
+    border-style: solid;
+    --border-style: solid;
+    border-width: 1px 1px 1px 1px;
+    --border-block-start-width: 1px;
+    --border-inline-end-width: 1px;
+    --border-block-end-width: 1px;
+    --border-inline-start-width: 1px;
+    border-color: #3D9B9C;
+    --border-color: #3D9B9C;
+}
+
+.feature-icon svg {
+    width: 30px;
+    height: auto;
+    fill: #ffffff;
+    flex-shrink: 0;
+    /* Impede que o ícone seja esmagado */
+}
+
+.feature-text {
+    font-size: 14px;
+}
+
+.feature-title {
+    display: block;
+    /* Para que o margin-bottom funcione */
+    font-weight: 600;
+}
+
+.feature-text p {
+    margin: 0;
+    line-height: 1.5;
+    opacity: 0.9;
+}
+
+.safety-section-2 {
+    background-color: #fff;
+    color: #4f5257;
+    padding: 20px 10px;
+}
+
+.safety-icon-2 svg {
+    width: 42px;
+    height: 44px;
+    fill: #fff;
+    margin-bottom: 10px;
+    background-color: #1C5E5F;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.safety-title-2 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    background: linear-gradient(90deg, #1C5E5F, #1C5E5F, #1C5E5F, #60a5a5);
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.feature-icon-2 svg {
+    width: 30px;
+    height: auto;
+    fill: #1C5E5F;
+    flex-shrink: 0;
+    /* Impede que o ícone seja esmagado */
+}
+
+
+/* ========= ESTILOS DA SEÇÃO #AboutUS ========= */
+.about-us-section {
+    background-color: #F4F4F4;
+    padding: 20px 10px;
+}
+
+.about-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.about-logo {
+    width: 120px;
+    /* Tamanho do logo conforme solicitado */
+    height: auto;
+    margin-bottom: 20px;
+}
+
+.about-title {
+    font-size: 16px;
+    /* Tamanho do título conforme solicitado */
+    color: #000000;
+    font-weight: 700;
+    /* Negrito */
+    margin-bottom: 15px;
+}
+
+.about-us-section p {
+    font-size: 14px;
+    /* Tamanho do texto conforme solicitado */
+    color: #000000;
+    line-height: 1.7;
+    /* Melhora a legibilidade */
+    margin-bottom: 1em;
+    /* Espaçamento padrão entre parágrafos */
+}
+
+/* Estilo para a última frase (tagline) */
+.about-us-section .tagline {
+    margin-top: 25px;
+}
+
+
+/* ========= ESTILOS DA SEÇÃO FAQ ========= */
+.faq-section {
+    background-color: #F4F4F4;
+    padding: 10px;
+}
+
+.faq-section .section-title {
+    font-size: 16px;
+    color: #000;
+    margin-bottom: 10px;
+}
+
+.faq-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.accordion {
+    border: 1px solid #dbdbdb;
+    overflow: hidden;
+    /* Garante que os cantos arredondados funcionem */
+}
+
+.accordion-item {
+    background-color: #f9f9f9;
+}
+
+.accordion-item:not(:last-child) {
+    border-bottom: 1px solid #dbdbdb;
+}
+
+.accordion-header {
+    width: 100%;
+    background-color: #dbdbdb;
+    border: none;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    text-align: left;
+}
+
+.accordion-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.accordion-icon svg {
+    width: 100%;
+    height: auto;
+}
+
+.accordion-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #000;
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+}
+
+.accordion-content p {
+    font-size: 14px;
+    padding: 15px;
+    /* Alinha o texto com o título */
+    margin: 0;
+    line-height: 1.6;
+    color: #434549;
+    background-color: #eeeeee;
+}
+
+/* --- ESTADOS ATIVOS --- */
+.accordion-item.active .accordion-title {
+    color: #1c5e5f;
+    /* Cor do título selecionado */
+}
+
+.accordion-item .icon-selected {
+    display: none;
+}
+
+.accordion-item .icon-unselected {
+    display: block;
+    fill: #888;
+}
+
+.accordion-item.active .icon-selected {
+    display: block;
+    fill: #1c5e5f;
+}
+
+.accordion-item.active .icon-unselected {
+    display: none;
+}
+
+.accordion-item.active .accordion-content {
+    max-height: 200px;
+    /* Altura suficiente para o conteúdo */
+}
+
+/* ========= ESTILOS DO RODAPÉ (FOOTER) ========= */
+.site-footer {
+    background-color: #222222;
+    color: #ffffff;
+    text-align: center;
+}
+
+.footer-content {
+    padding: 40px 20px 30px 20px;
+}
+
+.footer-logo {
+    width: 100px;
+    /* Largura do logo conforme solicitado */
+    height: auto;
+    margin-bottom: 15px;
+}
+
+.footer-tagline {
+    font-size: 14px;
+    font-style: italic;
+    color: #cccccc;
+    margin: 0 0 30px 0;
+}
+
+.footer-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-nav li {
+    padding: 12px 0;
+}
+
+.footer-nav a {
+    font-size: 14px;
+    /* Tamanho da fonte conforme solicitado */
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* Estilo para o item "Trust & Safety" com as bordas */
+.footer-nav .highlight-border {
+    border-bottom: 1px solid #22c1c3;
+}
+
+.footer-nav .highlight-border a {
+    color: #22c1c3;
+    /* Cor do texto destacada */
+}
+
+/* Barra inferior de copyright */
+.footer-bar {
+    padding: 20px;
+    border-top: 1px solid #333333;
+    background-color: #4B4B4B
+        /* Linha sutil de separação */
+}
+
+.footer-bar p {
+    font-size: 14px;
+    color: #000;
+    margin: 0;
+
+}
+
+/* ========= ESTILOS DO BLOCO FIXO DE DOAÇÃO ========= */
+.sticky-donate-bar {
+    /* Posicionamento fixo */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+
+    /* Aparência */
+    background-color: #ffffff;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    /* Sombra no topo */
+    z-index: 1000;
+    /* Garante que fique sobre todo o conteúdo */
+}
+
+.sticky-donate-content {
+    padding: 5px 10px;
+    border-top: 0.5px solid #979797;
+}
+
+.raised-amount {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+    /* Estilo de gradiente no texto */
+    background: linear-gradient(90deg, #22c1c3 0%, #22c1c3 50%, #6bfdff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    /* Garante que a cor sólida não interfira */
+    display: inline-block;
+    /* Necessário para o gradiente funcionar */
+}
+
+.goal-text {
+    font-size: 14px;
+    color: #555;
+    margin: 4px 0 10px 0;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    /* Altura da barra de progresso */
+    background-color: #D6D6D6;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-bar-fill {
+    width: 20%;
+    /* 45.750 é aprox. 20% de 230.000 */
+    height: 100%;
+    border-radius: 5px;
+    /* Estilo de gradiente no preenchimento */
+    background: linear-gradient(135deg, #22c1c3, #fdbb2d);
+}
+
+.info-text {
+    font-size: 11px;
+    text-align: center;
+    color: #333;
+    margin: 0 0 10px 0;
+}
+
+/* ========= ESTILOS DO POPUP DE DOAÇÃO ========= */
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 2000;
+}
+
+.popup-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 95%;
+    max-width: 400px;
+    max-height: 85vh;
+    background: #f4f4f4;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 2001;
+}
+
+.hidden {
+    display: none;
+}
+
+.popup-header {
+    background: #ffffff;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    border-bottom: 1px solid #e0e0e0;
+    flex-shrink: 0;
+}
+
+.popup-logo {
+    width: 110px;
+    height: auto;
+}
+
+.close-btn {
+    position: absolute;
+    top: 5px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: 300;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #888;
+}
+
+.popup-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.popup-intro {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.popup-intro .intro-title {
+    display: block;
+    color: #00a99d;
+    font-weight: 600;
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.popup-intro .intro-title::before,
+.popup-intro .intro-title::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 30%;
+    height: 1px;
+    background-color: #00a99d;
+}
+
+.popup-intro .intro-title::before {
+    left: 0;
+}
+
+.popup-intro .intro-title::after {
+    right: 0;
+}
+
+.popup-intro p {
+    font-size: 14px;
+    color: #555;
+    margin: 0;
+}
+
+/* Estilo para cards de doação quando são tags <a> */
+.donation-card {
+    background: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 8px 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 15px -5px #22C1C3;
+    position: relative;
+    text-decoration: none;
+    /* Remove sublinhado */
+    display: block;
+    /* Garante que ocupe toda a largura */
+    color: inherit;
+    /* Mantém cor do texto */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    /* Animação suave */
+}
+
+.donation-card:hover {
+    transform: translateY(-2px);
+    /* Leve movimento para cima */
+    box-shadow: 0 6px 20px -5px #22C1C3;
+    /* Sombra mais pronunciada */
+}
+
+.donation-card h3 {
+    font-size: 24px;
+    color: #4f5257;
+    margin: 0 0 5px 0;
+    font-weight: 500;
+}
+
+.donation-card .text-a {
+    font-size: 12px;
+    color: #1E5E3F;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.card-description {
+    font-size: 12px;
+    color: #555;
+    line-height: 1.5;
+}
+
+.meal-guarantee {
+    display: flex;
+    align-items: center;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 3px 5px;
+    font-size: 11px;
+    color: #555;
+}
+
+.highlight-banner {
+    background: #00a99d;
+    color: #fff;
+    padding: 5px 20px;
+    font-size: 11px;
+    font-weight: bold;
+    margin: 0 -21px -21px -21px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    margin-top: 20px;
+}
+
+.other-values-section {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.other-values-section h4 {
+    color: #00a99d;
+    margin-bottom: 20px;
+}
+
+.other-values-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.donation-card-simple {
+    background: #fff;
+    border: 1px solid #22C1C3;
+    padding: 15px;
+    border-radius: 12px;
+    text-align: left;
+    text-decoration: none;
+}
+
+.donation-card-simple h4 {
+    font-size: 20px;
+    color: #4f5257;
+    margin: 0 0 0px 0;
+    font-weight: 500;
+}
+
+.donation-card-simple .meal-guarantee {
+    justify-content: center;
+    padding: 6px 10px;
+    font-size: 11px;
+}
+
+.donation-card-simple .text-a {
+    font-size: 12px;
+    color: #1E5E3F;
+    text-decoration: none;
+    font-weight: 600;
+}

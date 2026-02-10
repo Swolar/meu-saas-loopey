@@ -1,0 +1,1623 @@
+﻿<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>Ajude o Pequeno Lucca a Viver Sem Dor</title>
+
+    <!-- Google Fonts - Montserrat -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script async="" src="js/fbevents_1.js"></script><script async="" src="js/fbevents.js"></script><script src="https://cdn.tailwindcss.com/"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Montserrat', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Doe com Solidariedade - Estilos Principais */
+
+/* Base Styles */
+body { 
+    background-color: #F5F5F5!important; 
+    color: #4f4f4f;
+    margin: 0;
+    padding: 0;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* Typography Scale - Mobile First */
+h1 {
+    font-size: 1.75rem; /* 28px mobile */
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 0.75rem;
+}
+
+h2 {
+    font-size: 1.5rem; /* 24px mobile */
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 0.75rem;
+}
+
+h3 {
+    font-size: 1.25rem; /* 20px mobile */
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+}
+
+h4 {
+    font-size: 1.125rem; /* 18px mobile */
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+p {
+    font-size: 0.9375rem; /* 15px mobile */
+    line-height: 1.6;
+    margin-bottom: 0.875rem;
+}
+
+small, .text-sm {
+    font-size: 0.8125rem; /* 13px mobile */
+}
+
+.text-xs {
+    font-size: 0.6875rem; /* 11px mobile */
+}
+
+button, .btn {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 0.9375rem; /* 15px mobile */
+}
+
+a {
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* Desktop Typography - Larger screens */
+@media (min-width: 768px) {
+    h1 {
+        font-size: 2.5rem; /* 40px desktop */
+        margin-bottom: 1rem;
+    }
+
+    h2 {
+        font-size: 2rem; /* 32px desktop */
+        margin-bottom: 0.875rem;
+    }
+
+    h3 {
+        font-size: 1.5rem; /* 24px desktop */
+        margin-bottom: 0.75rem;
+    }
+
+    h4 {
+        font-size: 1.25rem; /* 20px desktop */
+    }
+
+    p {
+        font-size: 1rem; /* 16px desktop */
+        margin-bottom: 1rem;
+    }
+
+    small, .text-sm {
+        font-size: 0.875rem; /* 14px desktop */
+    }
+
+    .text-xs {
+        font-size: 0.75rem; /* 12px desktop */
+    }
+
+    button, .btn {
+        font-size: 1rem; /* 16px desktop */
+    }
+}
+
+/* Accordion Styles */
+.accordion-content { 
+    max-height: 0px; 
+    overflow: hidden; 
+    transition: max-height 0.3s ease-in-out; 
+}
+
+.accordion-item.active .accordion-content { 
+    max-height: 200px; 
+}
+
+.accordion-item.active .accordion-arrow { 
+    transform: rotate(180deg); 
+}
+
+.accordion-arrow { 
+    transition: transform 0.3s ease-in-out; 
+}
+
+/* Menu Mobile Styles */
+#mobile-menu { 
+    display: none;
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    background: white;
+    z-index: 40;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+#mobile-menu.show { 
+    display: block; 
+}
+
+/* Tab Styles */
+.tab-link-active { 
+    border-bottom: 2px solid #25D366; 
+    color: #25D366; 
+    font-weight: 600; 
+}
+
+/* Avatar Group */
+.avatar-group > div { 
+    margin-left: -10px; 
+}
+
+.avatar-group > div:first-child { 
+    margin-left: 0; 
+}
+
+/* Confetti Animation */
+.confetti-container {
+    position: absolute;
+    top: -100px;
+    left: -50px;
+    width: calc(100% + 100px);
+    height: 200px;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+.confetti {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    opacity: 0;
+    border-radius: 50%;
+    animation: fall-and-fade 3s linear forwards;
+}
+
+/* Keyframes para a animação de queda e fade-out */
+@keyframes fall-and-fade {
+    0% { 
+        transform: translateY(-50px) rotate(0deg); 
+        opacity: 0.8; 
+    }
+    100% { 
+        transform: translateY(200px) rotate(720deg);
+        opacity: 0; 
+    }
+}
+
+/* Animação para a notificação deslizar da direita para a esquerda */
+@keyframes slide-in-right {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.animate-slide-in-right {
+    animation: slide-in-right 0.5s ease forwards;
+}
+
+/* Animação de fade para troca de doadores */
+@keyframes fade-in-out {
+    0% { opacity: 0; transform: translateY(5px); }
+    10% { opacity: 1; transform: translateY(0); }
+    90% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-5px); }
+}
+
+.donor-fade {
+    animation: fade-in-out 4s ease-in-out;
+}
+
+/* Animação para lista de doações */
+.donation-item {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.donation-item:hover {
+    background-color: #f9fafb;
+    border-radius: 8px;
+}
+
+/* Container de doações com overflow controlado */
+#recent-donations-list {
+    overflow: hidden;
+    position: relative;
+}
+
+/* Animação para o card fixo aparecer */
+@keyframes slide-up {
+    from {
+        transform: translateY(120%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-up {
+    animation: slide-up 0.4s ease-out forwards;
+}
+
+/* Estilo adicional para o card fixo */
+#sticky-donation-card {
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+}
+
+#sticky-donation-card.hidden {
+    display: none !important;
+}
+
+/* Footer Styles */
+.footer {
+    background-color: #ffffff;
+    color: #282828;
+    position: relative;
+    margin-top: 80px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px 20px;
+}
+
+/* Header do Footer */
+.footer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.footer-logo svg {
+    width: 170px;
+    height: 45px;
+}
+
+.social-links {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.social-links a {
+    color: #282828;
+    text-decoration: none;
+    transition: opacity 0.3s;
+}
+
+.social-links a:hover {
+    opacity: 0.6;
+}
+
+.social-links svg {
+    width: 24px;
+    height: 24px;
+    fill: #282828;
+}
+
+/* Conteúdo Principal do Footer */
+.footer-main {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 30px;
+}
+
+.footer-column h4 {
+    color: #25D366;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.footer-column ul {
+    list-style: none;
+}
+
+.footer-column ul li {
+    margin-bottom: 8px;
+}
+
+.footer-column ul li a {
+    color: #282828;
+    text-decoration: none;
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 400;
+    transition: opacity 0.3s;
+}
+
+.footer-column ul li a:hover {
+    opacity: 0.6;
+}
+
+/* Coluna Fale Conosco */
+.contact-info {
+    color: #6b7280;
+    font-size: 12px;
+    line-height: 18px;
+    margin-bottom: 15px;
+}
+
+.security-seal {
+    margin-top: 15px;
+}
+
+.security-seal img {
+    width: 115px;
+    height: 40px;
+}
+
+/* Coluna App */
+.app-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.app-button {
+    display: block;
+    width: 150px;
+}
+
+.app-button img {
+    width: 100%;
+    height: auto;
+}
+
+/* Copyright */
+.footer-copyright {
+    background-color: #f3f4f6;
+    text-align: center;
+    padding: 10px 0;
+    font-size: 12px;
+    color: #282828;
+}
+
+/* Responsividade do Footer */
+@media (max-width: 768px) {
+    .footer-main {
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+
+    .footer-header {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+    }
+
+    .footer-logo svg {
+        width: 120px;
+        height: 32px;
+    }
+}
+
+@media (max-width: 480px) {
+    .footer-main {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+
+    .footer-content {
+        padding: 30px 15px 15px;
+    }
+}
+
+    </style>
+    <script src="https://cdn.utmify.com.br/scripts/utms/latest.js" data-utmify-prevent-xcod-sck data-utmify-prevent-subids async defer></script>
+    <script src="https://loopeyviews.pro/script.js" data-site-id="53ge45pw"></script>
+
+    <script type="text/javascript">
+      window._mfq = window._mfq || [];
+      (function() {
+        var mf = document.createElement("script");
+        mf.type = "text/javascript"; mf.defer = true;
+        mf.src = "//cdn.mouseflow.com/projects/b8e37182-99d8-446e-bc5f-24b858a3ce55.js";
+        document.getElementsByTagName("head")[0].appendChild(mf);
+      })();
+    </script>
+
+<script>
+  window.pixelId = "69594f24ad5d52730c130a4e";
+  var a = document.createElement("script");
+  a.setAttribute("async", "");
+  a.setAttribute("defer", "");
+  a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
+  document.head.appendChild(a);
+</script>
+
+    <style>
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(1px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            animation: fadeIn 0.5s ease-out;
+            pointer-events: all;
+        }
+
+        .video-overlay.playing {
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .overlay-card {
+            background: #C8F77D;
+            border-radius: 16px;
+            padding: 1.25rem;
+            text-align: center;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 280px;
+            width: 85%;
+            transform: scale(1);
+            transition: all 0.3s ease;
+        }
+
+        .overlay-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 16px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        .overlay-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .overlay-title {
+            color: #000;
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            line-height: 1.2;
+        }
+
+        .sound-icon {
+            animation: pulse 2s infinite;
+            
+        }
+
+        .overlay-subtitle {
+            color: #000!important;
+            font-size: 0.875rem;
+            margin: 0 0 1rem 0;
+            font-weight: 500;
+        }
+
+        .play-button {
+            background: white;
+            color: #000!important;
+            border: none;
+            border-radius: 50px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 700;
+            font-size: 0.875rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 100%;
+        }
+
+        .play-button:hover {
+            background: #000!important;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .play-icon {
+            display: flex;
+            align-items: center;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        /* Responsividade                          */
+        @media (max-width: 768px) {
+            .overlay-card {
+                padding: 1rem;
+                max-width: 240px;
+            }
+
+            .overlay-title {
+                font-size: 1rem;
+            }
+
+            .overlay-subtitle {
+                font-size: 0.8rem;
+            }
+
+            .play-button {
+                padding: 0.625rem 1.25rem;
+                font-size: 0.8rem;
+            }
+
+            .sound-icon svg {
+                width: 28px;
+                height: 28px;
+            }
+        }
+      
+    </style>
+<style>
+        body {
+            background-color: #ffffff;
+            color: #1f2937;
+        }
+
+        .valor-btn {
+            padding: 1.25rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .valor-btn:hover {
+            border-color: #4A9D44;
+            background-color: #f0fdf4;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 157, 68, 0.15);
+        }
+
+        .valor-btn.selecionado {
+            border-color: #4A9D44;
+            background-color: #4A9D44;
+            color: white;
+            box-shadow: 0 4px 12px rgba(74, 157, 68, 0.3);
+        }
+
+        .checkout-container {
+            max-width: 32rem;
+            margin: 0 auto;
+            padding: 1.5rem 1.5rem 3rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .btn-finalizar {
+            width: 100%;
+            background-color: #4A9D44;
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            font-size: 1.125rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(74, 157, 68, 0.3);
+        }
+
+        .btn-finalizar:hover {
+            background-color: #3d8539;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(74, 157, 68, 0.4);
+        }
+
+        .btn-doar {
+            width: 100%;
+            background-color: #4A9D44;
+            color: white;
+            padding: 1.25rem;
+            border-radius: 12px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(74, 157, 68, 0.3);
+        }
+
+        .btn-doar:hover {
+            background-color: #3d8539;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(74, 157, 68, 0.4);
+        }
+
+
+
+        .donor-info-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding-bottom: 1.5rem;
+        }
+
+        .donor-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .last-donor-text {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .security-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+            text-align: center;
+            padding: 1rem;
+            background-color: #f9fafb;
+            border-radius: 8px;
+        }
+
+        .security-seal-small {
+            width: 80px;
+            height: auto;
+        }
+
+        .checkout-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #111827;
+        }
+
+        .gofundme-guarantee {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1.5rem;
+            background-color: #f9fafb;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e5e7eb;
+        }
+
+        .guarantee-icon {
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+        }
+
+        .guarantee-text {
+            flex: 1;
+        }
+
+        .guarantee-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #111827;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .guarantee-description {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .guarantee-link {
+            color: #4A9D44;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+
+        .guarantee-link:hover {
+            color: #3d8539;
+        }
+
+        .anonymous-checkbox {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .anonymous-checkbox:hover {
+            border-color: #4A9D44;
+        }
+
+        .anonymous-checkbox:checked {
+            background-color: #4A9D44;
+            border-color: #4A9D44;
+        }
+
+        .anonymous-checkbox:checked::after {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 2px;
+            width: 5px;
+            height: 9px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .anonymous-label {
+            font-size: 0.875rem;
+            color: #4b5563;
+            cursor: pointer;
+            user-select: none;
+            line-height: 1.4;
+        }
+
+        .anonymous-checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            padding: 0 0.5rem;
+        }
+    </style>
+    
+    <style>
+        body.no-scroll {
+    overflow: hidden;
+}
+
+/* BACKDROP ESCURO */
+.donation-offcanvas-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 9998;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+/* Quando visível */
+.donation-offcanvas-backdrop.is-visible {
+    display: block;
+    opacity: 1;
+}
+
+/* PAINEL PRINCIPAL (full screen, com seu header e main) */
+.donation-offcanvas-panel {
+    position: fixed;
+    inset: 0; /* top, right, bottom, left = 0 */
+    background: #ffffff;
+    z-index: 9999;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+}
+
+/* Aberto */
+.donation-offcanvas-panel.is-open {
+    transform: translateY(0);
+}
+    </style>
+    
+        <script>
+        !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=true;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '1081229410748354');
+        fbq('track', 'PageView');
+    </script>
+</head>
+<body class="bg-[#F5F5F5]">
+
+    <!-- ==============================================
+         PAINEL OFFCANVAS DE DOAÇÃO
+         ============================================== -->
+    <div id="donation-offcanvas-backdrop" class="donation-offcanvas-backdrop"></div>
+
+    <div id="donation-offcanvas-panel" class="donation-offcanvas-panel">
+        
+        <!-- Header interno (simples, com botão voltar/fechar) -->
+        <header class="bg-white shadow-sm sticky top-0 z-30">
+            <div class="container mx-auto px-4 h-16 flex justify-between items-center relative">
+                
+                <!-- Botão Voltar (fecha offcanvas) -->
+                <button onclick="document.getElementById('donation-offcanvas-backdrop').click()" class="text-gray-600 hover:text-gray-800 p-2 -ml-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                </button>
+
+                <!-- Logo Centralizada -->
+                <div class="absolute left-1/2 transform -translate-x-1/2">
+                    <img src="images/logo-casa-solidaria.png" alt="Casa Solidária" style="height: 80px; width: auto;">
+                </div>
+
+                <!-- Menu Hambúrguer (interno) -->
+                <button id="menu-toggle-button" class="text-gray-600 hover:text-gray-800 focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Mobile Menu (interno) -->
+            <div id="mobile-menu" class="hidden border-t border-gray-100 bg-white absolute w-full left-0 top-16 shadow-lg z-40">
+                <div class="px-4 pt-4 pb-3 space-y-1">
+                    <a href="#" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-green-500">Como ajudar</a>
+                    <a href="#" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-green-500">Descubra</a>
+                    <a href="#" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-green-500">Como funciona</a>
+                    <div class="border-t border-gray-200 pt-4 pb-3">
+                        <a href="#" class="block px-3 py-2 text-base font-medium text-green-500">Minha conta</a>
+                        <button class="w-full mt-3 bg-[#25D366] text-white px-4 py-2 rounded-md font-semibold">
+                            Faz uma vaquinha!
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Conteúdo do Offcanvas (Checkout) -->
+        <main class="bg-white min-h-[calc(100vh-64px)]">
+            <div class="checkout-container">
+                
+                <h1 class="checkout-title">
+                    Você está apoiando<br>
+                    <span class="text-[#4A9D44]">O Pequeno Lucca</span>
+                </h1>
+
+                <!-- Grid de Valores -->
+                <div class="grid">
+                                            <button type="button" class="valor-btn" data-valor="2000" data-url="https://checkout.waylinxpay.com/1769877907043">
+                            € 20,00                        </button>
+                                            <button type="button" class="valor-btn" data-valor="2500" data-url="https://checkout.waylinxpay.com/1769802071843">
+                            € 25,00                        </button>
+                                            <button type="button" class="valor-btn selecionado" data-valor="3000" data-url="https://checkout.waylinxpay.com/1769877954193">
+                            € 30,00                        </button>
+                                            <button type="button" class="valor-btn" data-valor="5000" data-url="https://checkout.waylinxpay.com/1769806843672">
+                            €  50,00                        </button>
+                                            <button type="button" class="valor-btn" data-valor="10000" data-url="https://checkout.waylinxpay.com/1769807209120">
+                            € 100,00                        </button>
+                                            <button type="button" class="valor-btn" data-valor="15000" data-url="https://checkout.waylinxpay.com/1769877997013">
+                            €  150,00                        </button>
+                                            <button type="button" class="valor-btn" data-valor="20000" data-url="https://checkout.waylinxpay.com/1769811856768">
+                            €  200,00                        </button>
+                                            <button type="button" class="valor-btn" data-valor="30000" data-url="https://checkout.waylinxpay.com/1769811888655">
+                            €  300,00                        </button>
+                                            <button type="button" class="valor-btn" data-valor="50000" data-url="https://checkout.waylinxpay.com/1769811917590">
+                            €   500,00                        </button>
+                                            <button type="button" class="valor-btn" data-valor="70000" data-url="https://checkout.waylinxpay.com/1769878035344">
+                            €    700,00                        </button>
+                                            <button type="button" class="valor-btn" data-valor="80000" data-url="https://checkout.waylinxpay.com/1769878106221">
+                            €    800,00                        </button>
+                                            <button type="button" class="valor-btn" data-valor="100000" data-url="https://checkout.waylinxpay.com/1769812008992">
+                            €  1.000,00                        </button>
+                    
+                                    </div>
+
+                <button id="finalizar-doacao" class="btn-doar">
+                    Doar agora
+                </button>
+
+                <div class="anonymous-checkbox-container">
+                    <input type="checkbox" id="anonymous-donation" class="anonymous-checkbox">
+                    <label for="anonymous-donation" class="anonymous-label">
+                        Não exibir meu nome publicamente na campanha.
+                    </label>
+                </div>
+
+                <div class="donor-info-container">
+                    <img src="images/9Bcg547_1.png" alt="Donation icon" class="donor-icon">
+                    <p id="last-donor-info" class="last-donor-text donor-fade">Tegan Perry doou €50.00</p>
+                </div>
+
+                <div class="gofundme-guarantee">
+                    <img src="images/AcZZz5M.png" alt="Security Icon" class="guarantee-icon">
+                    <div class="guarantee-text">
+                        <h3 class="guarantee-title">Casa Solidária protege sua doação</h3>
+                        <p class="guarantee-description">
+                            Garantimos reembolso total por até um ano em caso de fraude.
+                            <a href="#" class="guarantee-link">
+                                Veja nossa Garantia Casa Solidária.
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+</div>
+
+
+    <header class="bg-white shadow-sm sticky top-0 z-30">
+        <div class="container mx-auto px-4 h-16 flex justify-between items-center">
+
+            <!-- Search icon on the left -->
+            <button class="text-gray-600 hover:text-gray-800">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+            </button>
+
+            <div class="absolute left-1/2 transform -translate-x-1/2">
+    <a data-tracking-id="logo">
+                    <img src="images/logo-casa-solidaria.png" alt="Casa Solidária" style="height: 80px; width: auto;">
+            </a>
+</div>
+
+
+            <!-- Hamburger menu on the right -->
+            <button id="menu-toggle-button" class="text-gray-600 hover:text-gray-800 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+
+        <div id="mobile-menu" class="md:hidden">
+            <div class="px-4 pt-4 pb-3 space-y-1">
+                <a href="#" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-green-500">Como
+                    ajudar</a>
+                <a href="#" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-green-500">Descubra</a>
+                <a href="#" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-green-500">Como
+                    funciona</a>
+                <div class="border-t border-gray-200 pt-4 pb-3">
+                    <a href="#" class="block px-3 py-2 text-base font-medium text-green-500">Minha conta</a>
+                    <button class="w-full mt-3 bg-[#25D366] text-white px-4 py-2 rounded-md font-semibold">Faz uma
+                        vaquinha!</button>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    
+
+    <main>
+        
+     
+
+        
+        <div class="bg-black overflow-hidden">
+    <div class="video-container" style="position: relative; width: 100%; max-width: 100%; aspect-ratio: 16/9; background: #000;">
+        <img src="images/bannerlucca.png" alt="Ajude o Pequeno Lucca" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+    </div>
+</div>
+
+        <!-- Amount raised, progress bar and buttons -->
+        <div id="donation-section" class="bg-white p-4 md:p-6">
+            <div class="flex items-center gap-4 mb-4">
+                <!-- Barra circular de progresso -->
+                <div class="flex-shrink-0">
+                    <div class="relative w-16 h-16 md:w-20 md:h-20">
+                        <svg class="transform -rotate-90 w-full h-full">
+                            <circle cx="50%" cy="50%" r="28" stroke="#e5e7eb" stroke-width="6" fill="none"></circle>
+                            <circle id="progress-circle" cx="50%" cy="50%" r="28" stroke="#2D5A3D" stroke-width="6" fill="none" stroke-dasharray="176" stroke-dashoffset="137" stroke-linecap="round" style="stroke-dasharray: 226.195, 226.195; stroke-dashoffset: 176;"></circle>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span id="progress-percentage" class="text-sm md:text-base font-bold text-gray-800">22%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fundraising information -->
+                <div class="flex-grow">
+                    <p class="text-xl md:text-2xl font-bold text-gray-800" id="value-raised-desktop">€ 22.228,00</p>
+                    <p class="text-xs md:text-sm text-gray-500" id="value-goal-desktop">meta € 100.000,00</p>
+                    <p id="last-donor-info" class="text-xs text-gray-500 mt-1">Tegan Perry doou €50,00</p>
+                </div>
+            </div>
+
+            <!-- Side by side buttons -->
+            <div class="grid grid-cols-2 gap-3">
+                <a class="bg-[#2d5a3d] text-[#c8f77d] py-3 md:py-4 rounded-full font-bold text-sm md:text-base hover:bg-[#234a2f] transition-colors text-center flex items-center justify-center" data-open-donation="">Compartilhar</a>
+                <a class="bg-[#c8f77d] text-[#2d5a3d] py-3 md:py-4 rounded-full font-bold text-sm md:text-base text-center hover:bg-[#b8e76d] transition-colors flex items-center justify-center" data-open-donation="">Doar</a>
+            </div>
+        </div>
+
+        <!-- Container for the rest of the content -->
+        <div class="container mx-auto px-4 py-6">
+
+            <div class="hidden md:block bg-white p-4 rounded-lg shadow-sm mb-6">
+                <p class="text-xs text-gray-500 mb-1 flex justify-between">
+                    <span id="campaign-category-desktop"></span>
+                    <span id="campaign-location-desktop"></span>
+                </p>
+                <h1 id="campaign-title-desktop" class="text-2xl font-bold text-gray-800">Ajude o Pequeno Lucca a Viver Sem Dor</h1>
+                <p class="text-xs text-gray-500 mt-1">ID: <span id="campaign-id-desktop">g0n88nPKOtpk</span></p>
+            </div>
+
+            <div class="md:hidden bg-white p-4 rounded-lg shadow-sm mb-6">
+                <p class="text-xs text-gray-500 mb-1 flex justify-between">
+                    <span id="campaign-category-mobile"></span>
+                    <span id="campaign-location-mobile"></span>
+                </p>
+                <h1 id="campaign-title-mobile" class="text-2xl font-bold text-gray-800">Ajude o Pequeno Lucca a Viver Sem Dor</h1>
+                <p class="text-xs text-gray-500 mt-1">ID: <span id="campaign-id-mobile">g0n88nPKOtpk</span></p>
+
+            </div>
+
+            <!-- About Section -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <!-- Story title -->
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Ajude o Pequeno Lucca a Viver Sem Dor Story</h2>
+
+                <!-- Description -->
+                                                <div id="campaign-description" class="text-gray-700 text-base leading-relaxed space-y-4 mb-6">
+                    <p>🚨 <strong>O Lucca precisa de nós. Agora.</strong> 🚨</p>
+                    <p>Este é o Lucca.</p>
+                    <p>Um menino de apenas <strong>3 anos</strong>, que enfrenta uma batalha injusta contra um <strong>tumor gravíssimo na boca</strong>, uma doença que avançou rapidamente e mudou por completo a sua infância.</p>
+                    <p>A doença provoca <strong>dores intensas, sangramentos constantes</strong> e <strong>dificuldades até para comer e falar</strong>. O Lucca vive diariamente uma realidade de sofrimento que nenhuma criança deveria conhecer.</p>
+
+                    <p>💔 <strong>Uma luta diária pela vida</strong></p>
+                    <p>A sua mãe, <strong>Ana</strong>, luta todos os dias para aliviar a dor do filho e garantir que ele receba o tratamento necessário.</p>
+                    <p>Mas os custos são elevados e constantes.</p>
+                    <p>Sem ajuda, o Lucca corre o risco de perder ainda mais <strong>qualidade de vida</strong> e, infelizmente, a <strong>própria vida</strong>.</p>
+
+                    <p>✨ <strong>A esperança que não podemos deixar morrer</strong></p>
+                    <p>Apesar de tudo, ainda existe esperança.</p>
+                    <p>Com acompanhamento médico adequado, cirurgias, exames e medicamentos de alto custo, o Lucca pode ter mais conforto, dignidade e uma <strong>verdadeira chance de vencer esta luta</strong>.</p>
+                    <p>Mas isso só é possível com apoio.</p>
+
+                    <p>⏳ <strong>Porque precisamos de ajuda agora</strong></p>
+                    <p>O tratamento do Lucca exige recursos imediatos e contínuos. Cada dia conta.</p>
+                    <p>Os custos acumulam-se rapidamente e a família não consegue suportar tudo sozinha.</p>
+
+                    <p>🎯 <strong>Para onde vai o valor angariado</strong></p>
+                    <p>🏥 Cirurgias, exames e internamentos</p>
+                    <p>💊 Medicamentos de alto custo</p>
+                    <p>🍽️ Alimentação especial</p>
+                    <p>🚗 Transporte para hospitais e tratamentos</p>
+                    <p>Nada é exagero.</p>
+                    <p>Nada é opcional.</p>
+                    <p>Tudo é essencial para o Lucca continuar a lutar.</p>
+
+                    <p>❤️ <strong>Como pode ajudar</strong></p>
+                    <p>👉 Com um <strong>donativo</strong> — qualquer valor faz a diferença</p>
+                    <p>👉 Com uma <strong>partilha</strong> — pode chegar à pessoa certa no momento certo</p>
+                    <p>Cada gesto conta. Cada ajuda aproxima o Lucca de uma vida com menos dor.</p>
+
+                    <p>🙏 <strong>Uma mensagem da mãe do Lucca</strong></p>
+                    <p>“Sou a Ana, mãe do Lucca. Ver o meu filho lutar para sobreviver é a dor mais difícil que uma mãe pode sentir. Cada doação, cada mensagem e cada gesto de carinho dão-nos força para continuar. Obrigada por nos ajudarem num momento tão delicado.”</p>
+
+                    <p>💚 <strong>Ajude o Lucca a viver com mais dignidade e menos dor</strong></p>
+                    <p>🤝 <strong>Obrigado por acreditar</strong></p>
+                    <p>💙 <strong>Obrigado por ajudar o Lucca</strong></p>
+                </div>
+
+                <!-- <button class="text-gray-600 hover:text-gray-800 font-semibold mb-6 underline">Ler mais</button> -->
+
+                <!-- Reactions Section -->
+                <div class="pt-4 border-t">
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <!-- React button -->
+                        <button class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-full text-gray-700 hover:bg-gray-50 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                                </path>
+                                <line x1="12" y1="5.67" x2="12" y2="21.23"></line>
+                            </svg>
+                            React
+                        </button>
+
+                        <!-- Reactions -->
+                        <button class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
+                            <span style="font-size: 1.5rem;">❤️‍🩹</span>
+                            <span style="font-size: 1.5rem;">🙏</span>
+                            <span style="font-size: 1.5rem;">💚</span>
+                            <span style="font-size: 1.5rem;">💐</span>
+                            <span style="font-size: 1.5rem;">✨</span>
+                            <span style="font-size: 1.5rem;">👏</span>
+                            <span class="font-semibold text-gray-700 underline ml-2">215</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- Donations Section (Independent Card) -->
+            <div class="bg-white mt-6 p-6 rounded-lg shadow-sm">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <h3 class="text-2xl font-bold text-gray-800">Donations</h3>
+                        <span id="donations-count-badge" class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm font-semibold">100</span>
+                    </div>
+                    <button class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-full text-gray-600 text-sm hover:bg-gray-50 transition-colors whitespace-nowrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                            </polygon>
+                        </svg>
+                        Ver maiores doações
+                    </button>
+                </div>
+
+                <!-- Donor statistics -->
+                <div class="mb-6 flex items-center gap-3">
+                    <div class="bg-purple-100 rounded-full p-3 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                    </div>
+                    <p class="text-lg font-semibold text-purple-700"><span id="total-donors-count">100</span>
+                        pessoas doaram</p>
+                </div>
+
+                <!-- Donors list -->
+                <div id="recent-donations-list" class="space-y-4">
+                    <div class="donation-item flex items-start gap-4 py-3 transition-all duration-500">
+                        <img src="images/iRLJ05E.png" alt="Tegan Perry" class="w-12 h-12 rounded-full flex-shrink-0">
+                        <div class="flex-grow">
+                            <p class="font-bold text-gray-800">Tegan Perry</p>
+                            <p class="text-gray-700">
+                                <span class="font-bold">€50.00</span>
+                                <span class="text-gray-500"> · Recent donation</span>
+                            </p>
+                        </div>
+                    </div>
+                
+                    <div class="donation-item flex items-start gap-4 py-3 transition-all duration-500">
+                        <img src="images/iRLJ05E.png" alt="Leigh Rivers" class="w-12 h-12 rounded-full flex-shrink-0">
+                        <div class="flex-grow">
+                            <p class="font-bold text-gray-800">Leigh Rivers</p>
+                            <p class="text-gray-700">
+                                <span class="font-bold">€500,000.00</span>
+                                <span class="text-gray-500"> · Top donation</span>
+                            </p>
+                        </div>
+                    </div>
+                
+                    <div class="donation-item flex items-start gap-4 py-3 transition-all duration-500">
+                        <img src="images/iRLJ05E.png" alt="Anonymous" class="w-12 h-12 rounded-full flex-shrink-0">
+                        <div class="flex-grow">
+                            <p class="font-bold text-gray-800">Anonymous</p>
+                            <p class="text-gray-700">
+                                <span class="font-bold">€250.00</span>
+                                <span class="text-gray-500"> · First donation</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ver todas button -->
+                <button class="w-full mt-6 py-3 border-2 border-gray-300 rounded-full text-gray-700 font-bold hover:bg-gray-50 transition-colors">
+                    Ver todas
+                </button>
+            </div>
+
+            <!-- Organizer Section (Separate Card) -->
+            <div class="bg-white mt-6 p-6 rounded-lg shadow-sm">
+                <!-- <h3 class="text-2xl font-bold text-gray-800 mb-6">Organizer</h3> -->
+                <div class="flex items-start gap-4">
+                    <img id="organizer-avatar-tab" src="images/9Bcg547.png" alt="Organizer" class="w-16 h-16 rounded-full">
+                    <div class="flex-grow">
+                        <h4 id="organizer-name-tab" class="text-xl font-bold text-gray-800">Ana (Mãe do Lucca)</h4>
+                        <p class="text-sm text-gray-600 mt-1">Organizador</p>
+                        <!-- <p id="organizer-location-tab" class="text-sm text-gray-600"></p> -->
+                        <button class="mt-4 px-8 py-2 border-2 border-gray-300 rounded-full text-gray-700 font-semibold hover:bg-gray-50 transition-colors">Contato</button>
+                    </div>
+                </div>
+            </div>
+
+           
+
+            <!-- Campaign information -->
+            <div class="bg-white mt-6 p-4 rounded-lg">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <p class="text-gray-500 text-xs md:text-sm">
+    November 11, 2025</p>
+                    <div class="flex items-center gap-2">
+                        <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
+                            Doação protegida
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- Campaign information -->
+        <div class="bg-white mt-6 p-6 rounded-lg shadow-sm">
+            <button class="w-full py-3 text-gray-600 font-semibold hover:text-gray-800 transition-colors flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <flag></flag>
+                    <line x1="4" y1="22" x2="4" y2="15"></line>
+                </svg>
+                Reportar campanha
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Sticky Donation Card -->
+    <div id="sticky-donation-card" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50 hidden md:hidden">
+        <div class="container mx-auto max-w-5xl flex items-center justify-between gap-4">
+            <div class="flex-grow">
+                <!-- Barra circular de progresso -->
+                <div class="flex items-center gap-3">
+                    <div class="relative w-12 h-12 flex-shrink-0">
+                        <svg class="transform -rotate-90 w-full h-full">
+                            <circle cx="50%" cy="50%" r="20" stroke="#e5e7eb" stroke-width="4" fill="none"></circle>
+                            <circle id="sticky-progress-circle" cx="50%" cy="50%" r="20" stroke="#2D5A3D" stroke-width="4" fill="none" stroke-dasharray="125.6" stroke-dashoffset="98" stroke-linecap="round"></circle>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span id="sticky-progress-percentage" class="text-xs font-bold text-gray-800">22%</span>
+                        </div>
+                    </div>
+                    <div>
+                        <p id="sticky-value-raised" class="font-bold text-gray-800 text-sm">€ 22.228 raised</p>
+                        <p id="sticky-donor-info" class="text-xs text-gray-500 truncate max-w-[150px]"></p>
+                    </div>
+                </div>
+            </div>
+            <button class="bg-[#c8f77d] text-[#2d5a3d] px-6 py-3 rounded-full font-bold text-sm hover:bg-[#b8e76d] transition-colors whitespace-nowrap shadow-md" data-open-donation="">
+                Doar
+            </button>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <!-- Header do Footer com Logo e Redes Sociais -->
+            <div class="footer-header">
+                <div class="footer-logo">
+                    <a data-tracking-id="logo">
+                    <img src="images/logo-casa-solidaria.png" alt="Casa Solidária" style="height: 80px; width: auto;">
+            </a>
+                </div>
+                
+                <div class="social-links">
+                    <a href="#" aria-label="YouTube">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"></path></svg>
+                    </a>
+                    <a href="#" aria-label="Twitter">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M23.953 4.57a10 10 0 0 1-2.825.775 4.958 4.958 0 0 0 2.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 0 0-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 0 0-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 0 1-2.228-.616v.06a4.923 4.923 0 0 0 3.946 4.827 4.996 4.996 0 0 1-2.212.085 4.936 4.936 0 0 0 4.604 3.417 9.867 9.867 0 0 1-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 0 0 7.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0 0 24 4.59z"></path></svg>
+                    </a>
+                    <a href="#" aria-label="Facebook">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path></svg>
+                    </a>
+                    <a href="#" aria-label="Instagram">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.315 1.347 20.646.935 19.856.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439z"></path></svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Colunas do Footer -->
+            <div class="footer-main">
+                <!-- Coluna 1 -->
+                <div class="footer-column">
+                    <h4>Casa Solidária</h4>
+                    <ul>
+                        <li><a href="#">Descubra</a></li>
+                        <li><a href="#">Sobre a Casa Solidária</a></li>
+                        <li><a href="#">Nosso Blog</a></li>
+                        <li><a href="#">Carreiras</a></li>
+                        <li><a href="#">Imprensa</a></li>
+                    </ul>
+                </div>
+
+                <!-- Coluna 2 -->
+                <div class="footer-column">
+                    <h4>Ajuda e Suporte</h4>
+                    <ul>
+                        <li><a href="#">Central de Ajuda</a></li>
+                        <li><a href="#">Fale Conosco</a></li>
+                        <li><a href="#">Termos de Uso</a></li>
+                        <li><a href="#">Política de Privacidade</a></li>
+                        <li><a href="#">Política de Cookies</a></li>
+                    </ul>
+                </div>
+
+                <!-- Coluna 3: Fale Conosco -->
+                <div class="footer-column">
+                    <h4>Fale Conosco</h4>
+                    <p class="contact-info">
+                        Precisa de ajuda? Entre em contato com nossa equipe de suporte dedicada.
+                    </p>
+                    <div class="security-seal">
+                        <img src="images/norton-secured.png" alt="Norton Secured" onerror="this.style.display='none'">
+                    </div>
+                </div>
+
+                <!-- Coluna 4: Baixe o App -->
+                <div class="footer-column">
+                    <h4>Baixe o App</h4>
+                    <div class="app-buttons">
+                        <a href="#" class="app-button">
+                            <img src="images/app-store-badge.png" alt="Download on App Store" onerror="this.style.display='none'">
+                        </a>
+                        <a href="#" class="app-button">
+                            <img src="images/google-play-badge.png" alt="Get it on Google Play" onerror="this.style.display='none'">
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Copyright -->
+        <div class="footer-copyright">
+            © 2025 Casa Solidária. Todos os direitos reservados.
+        </div>
+    </footer>
+
+
+    <script>
+        // ======= CONFIGURAÇÃO DA CAMPANHA (MOCK) =======
+        const CAMPAIGN_DATA = {
+            id: "g0n88nPKOtpk",
+            title: "Ajude o Pequeno Lucca a Viver Sem Dor",
+            description: "O Lucca precisa de nós. Agora. Ajude o pequeno Lucca a vencer o câncer.",
+            category: "Saúde e Tratamentos",
+            location: "Lisboa, Portugal",
+            valueRaised: "22.228,00",
+            valueGoal: "100.000,00",
+            supporters: 1450,
+            organizer: {
+                name: "Ana (Mãe do Lucca)",
+                location: "Lisboa, PT",
+                avatar: "images/9Bcg547.png"
+            },
+            donations: [
+                { name: "Maria Silva", value: 50.00, type: "Doação recente" },
+                { name: "João Santos", value: 100.00, type: "Doação recente" },
+                { name: "Ana Costa", value: 25.00, type: "Doação recente" }
+            ]
+        };
+
+        // Função global para formatar moeda
+        function formatCurrency(value) {
+            return "€ " + value.toLocaleString('en-GB', { minimumFractionDigits: 2 });
+        }
+        
+        // Função para formatar string com €
+        function formatPoundString(value) {
+            // Remove símbolos não numéricos exceto , e .
+            let numStr = String(value).replace(/[^\d.,]/g, '');
+            // Se tiver vírgula no final como decimal, remove
+            numStr = numStr.split(',')[0]; 
+            return "€ " + numStr;
+        }
+
+        // Simula uma API ou dados globais
+        window.campaignData = CAMPAIGN_DATA;
+
+        function populateData() {
+            // Preencher títulos
+            const titles = ["campaign-title-desktop", "campaign-title-mobile"];
+            titles.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.innerText = CAMPAIGN_DATA.title;
+            });
+
+            // Valores
+            const raised = document.getElementById("value-raised-desktop");
+            if(raised) raised.innerText = formatPoundString(CAMPAIGN_DATA.valueRaised);
+
+            const goal = document.getElementById("value-goal-desktop");
+            if(goal) goal.innerText = "meta " + formatPoundString(CAMPAIGN_DATA.valueGoal);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            populateData();
+        });
+    </script>
+
+    <script>
+        // Lógica de "Ler mais" (expandir texto)
+        // ... (se necessário, ou manter estático)
+    </script>
+
+    <script>
+        // Script principal para funcionalidades da página
+        // ... (colar aqui o conteúdo do script principal se não estiver em arquivo separado)
+        // Por enquanto, mantemos os scripts inline originais abaixo.
+    </script>
+
+    <script>
+    // ==========================================
+    // SCRIPT GERAL (PRESERVE DO INDEX ORIGINAL)
+    // ==========================================
+    
+    // Simulação de dados de doadores para rotação
+    const allDonors = [
+    { name: "Daniel Wilson", value: 180, type: "Recent donation" },
+    { name: "Isabella Garcia", value: 110, type: "Recent donation" },
+    { name: "Matthew Taylor", value: 95, type: "Recent donation" },
+    { name: "Charlotte Moore", value: 130, type: "Recent donation" },
+    { name: "Anonymous", value: 60, type: "First donation" },
+  ];
+
+  // ... (restante do código JS original para rotação de doadores, sticky card, etc.)
+  // Para brevidade, assumimos que o JS inline original cuida disso ou será movido para main.js
+  
+  // Exemplo simplificado de rotação de doadores para o IndexLucca
+    const recentDonationsList = document.getElementById("recent-donations-list");
+    if (recentDonationsList) {
+        let currentDonorSet = 0;
+        
+        function renderDonors() {
+            const startIndex = (currentDonorSet * 3) % allDonors.length;
+            const displayDonors = [];
+            for (let i = 0; i < 3; i++) {
+                displayDonors.push(allDonors[(startIndex + i) % allDonors.length]);
+            }
+            
+            recentDonationsList.innerHTML = displayDonors.map(donor => `
+                <div class="donation-item flex items-start gap-4 py-3 transition-all duration-500">
+                    <img src="images/iRLJ05E.png" alt="Donor" class="w-12 h-12 rounded-full flex-shrink-0">
+                    <div class="flex-grow">
+                        <p class="font-bold text-gray-800">${donor.name}</p>
+                        <p class="text-gray-700">
+                            <span class="font-bold">€${donor.value}</span>
+                            <span class="text-gray-500"> · ${donor.type}</span>
+                        </p>
+                    </div>
+                </div>
+            `).join("");
+            currentDonorSet++;
+        }
+        
+        renderDonors();
+        setInterval(renderDonors, 5000); // Roda a cada 5s
+    }
+    </script>
+    
+    <!-- Scripts de Lógica de UI (Offcanvas, etc) -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const offcanvasBackdrop = document.getElementById('donation-offcanvas-backdrop');
+        const offcanvasPanel    = document.getElementById('donation-offcanvas-panel');
+
+        function openDonationOffcanvas() {
+            if (!offcanvasBackdrop || !offcanvasPanel) return;
+            offcanvasBackdrop.classList.add('is-visible');
+            offcanvasPanel.classList.add('is-open');
+            document.body.classList.add('no-scroll');
+        }
+
+        function closeDonationOffcanvas() {
+            if (!offcanvasBackdrop || !offcanvasPanel) return;
+            offcanvasBackdrop.classList.remove('is-visible');
+            offcanvasPanel.classList.remove('is-open');
+            document.body.classList.remove('no-scroll');
+        }
+
+        // Botões que abrem o offcanvas
+        document.querySelectorAll('[data-open-donation]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                openDonationOffcanvas();
+            });
+        });
+
+        // Fechar ao clicar no backdrop
+        if (offcanvasBackdrop) {
+            offcanvasBackdrop.addEventListener('click', function (e) {
+                if (e.target === offcanvasBackdrop) {
+                    closeDonationOffcanvas();
+                }
+            });
+        }
+        
+        // Seleção de valor no offcanvas
+        const valorButtons = document.querySelectorAll('.valor-btn');
+        let selectedUrl = "https://pay.casasolidaria.online/v0XGZ0p8Wp43lKA"; // Default €30
+
+        valorButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                valorButtons.forEach(b => b.classList.remove('selecionado'));
+                btn.classList.add('selecionado');
+                selectedUrl = btn.getAttribute('data-url');
+            });
+        });
+
+        const finalizarBtn = document.getElementById('finalizar-doacao');
+        if(finalizarBtn) {
+            finalizarBtn.addEventListener('click', () => {
+                if(selectedUrl) window.location.href = selectedUrl;
+            });
+        }
+    });
+    </script>
+
+</body></html>

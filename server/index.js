@@ -539,6 +539,72 @@ app.put('/api/sites/:id/slugs', authenticateToken, async (req, res) => {
   }
 });
 
+// Get list of templates
+app.get('/api/templates', (req, res) => {
+  const templatesDir = path.join(__dirname, '../client/public/templates');
+  
+  if (!fs.existsSync(templatesDir)) {
+    return res.json([]);
+  }
+
+  try {
+    const templates = fs.readdirSync(templatesDir, { withFileTypes: true })
+      .filter(dirent => dirent.isDirectory())
+      .map(dirent => ({
+        id: dirent.name,
+        name: dirent.name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), // Formata nome
+        description: 'Modelo personalizado carregado.',
+        icon: 'Layout', // Nome do ícone (frontend deve mapear)
+        path: `/templates/${dirent.name}/index.html`
+      }));
+    res.json(templates);
+  } catch (err) {
+    console.error('Error reading templates directory:', err);
+    res.status(500).json({ error: 'Failed to list templates' });
+  }
+});
+
+// Get template content (index.html)
+app.get('/api/templates/:id/content', (req, res) => {
+  const templateId = req.params.id;
+  const filePath = path.join(__dirname, `../client/public/templates/${templateId}/index.html`);
+  
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'Template file not found' });
+  }
+
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    res.send(content);
+  } catch (err) {
+    console.error('Error reading template file:', err);
+    res.status(500).json({ error: 'Failed to read template file' });
+  }
+});
+
+// Save template content
+app.post('/api/templates/:id/content', express.json({ limit: '50mb' }), (req, res) => {
+  const templateId = req.params.id;
+  const filePath = path.join(__dirname, `../client/public/templates/${templateId}/index.html`);
+  const { content } = req.body;
+
+  if (!content) {
+    return res.status(400).json({ error: 'No content provided' });
+  }
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'Template file not found' });
+  }
+
+  try {
+    fs.writeFileSync(filePath, content, 'utf8');
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error saving template file:', err);
+    res.status(500).json({ error: 'Failed to save template file' });
+  }
+});
+
 // Handle React Routing, return all requests to React app
 app.get('*', (req, res) => {
   // If request is for API, don't return index.html (should have been handled above)

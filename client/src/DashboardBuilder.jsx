@@ -1,19 +1,36 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Upload, Plus, Monitor, Layout, FileCode, Check, X } from 'lucide-react';
 
 const DashboardBuilder = ({ themeColor, viewMode }) => {
+  const navigate = useNavigate();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [customTemplates, setCustomTemplates] = useState([]);
+
+  // Fetch custom templates
+  React.useEffect(() => {
+    fetch('/api/templates')
+      .then(res => res.json())
+      .then(data => setCustomTemplates(data))
+      .catch(err => console.error('Failed to load templates:', err));
+  }, []);
 
   // Determine current active section
   const activeSection = viewMode ? viewMode.replace('builder-', '') : 'themes';
 
   // Mock templates
-  const templates = [
+  const defaultTemplates = [
     { id: 1, name: 'Landing Page VSL', description: 'Ideal para ofertas de alta conversão com vídeo.', icon: Monitor },
     { id: 2, name: 'Advertorial Blog', description: 'Layout estilo blog para aquecimento de leads.', icon: FileCode },
     { id: 3, name: 'Quiz Funnel', description: 'Página de captura interativa com perguntas.', icon: Layout },
     { id: 4, name: 'E-commerce Single Product', description: 'Foco total em um único produto.', icon: Monitor },
+  ];
+
+  // Merge templates (Custom ones get generic Layout icon if string is passed)
+  const templates = [
+    ...customTemplates.map(t => ({ ...t, icon: Layout, isCustom: true })), 
+    ...defaultTemplates
   ];
 
   const handleUploadClick = () => {
@@ -132,6 +149,56 @@ const DashboardBuilder = ({ themeColor, viewMode }) => {
                         </div>
                         <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>{template.name}</h3>
                         <p style={{ color: '#9ca3af', fontSize: '0.9rem', marginBottom: '1.5rem', flex: 1 }}>{template.description}</p>
+                        
+                        {template.isCustom ? (
+                             <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+                                <a 
+                                  href={template.path} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    flex: 1,
+                                    background: 'transparent',
+                                    border: `1px solid ${themeColor}`,
+                                    color: themeColor,
+                                    padding: '0.5rem 1rem',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.5rem',
+                                    textDecoration: 'none',
+                                    fontSize: '0.85rem'
+                                  }}
+                                >
+                                  <Monitor size={14} />
+                                  Visualizar
+                                </a>
+                                <button 
+                                   onClick={() => navigate(`/builder/edit/${template.id}`)}
+                                   style={{
+                                     flex: 1,
+                                     background: themeColor,
+                                     border: 'none',
+                                     color: 'white',
+                                     padding: '0.5rem 1rem',
+                                     borderRadius: '6px',
+                                     cursor: 'pointer',
+                                     fontWeight: 'bold',
+                                     display: 'flex',
+                                     alignItems: 'center',
+                                     justifyContent: 'center',
+                                     gap: '0.5rem',
+                                     fontSize: '0.85rem'
+                                   }}
+                                 >
+                                   <FileCode size={14} />
+                                   Editar
+                                 </button>
+                             </div>
+                        ) : (
                         <button 
                           style={{
                             background: 'transparent',
@@ -159,6 +226,7 @@ const DashboardBuilder = ({ themeColor, viewMode }) => {
                           <Plus size={16} />
                           Usar Modelo
                         </button>
+                        )}
                       </div>
                     ))}
                   </div>
