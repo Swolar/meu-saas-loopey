@@ -35,7 +35,8 @@ app.use(cors({
   },
   credentials: true
 }));
-app.use(express.json()); // Enable JSON parsing for API
+app.use(express.json({ limit: '500mb' })); // Enable JSON parsing for API (Increased for video uploads)
+app.use(express.urlencoded({ limit: '500mb', extended: true }));
 app.set('trust proxy', true);
 
 // Debug Version Endpoint
@@ -602,6 +603,37 @@ app.post('/api/templates/:id/content', express.json({ limit: '50mb' }), (req, re
   } catch (err) {
     console.error('Error saving template file:', err);
     res.status(500).json({ error: 'Failed to save template file' });
+  }
+});
+
+// Upload Template Asset (Image/Video)
+app.post('/api/templates/:id/assets', async (req, res) => {
+  const templateId = req.params.id;
+  const { filename, content } = req.body; // content is base64 string
+
+  if (!filename || !content) {
+    return res.status(400).json({ error: 'Filename and content required' });
+  }
+
+  const uploadsDir = path.join(__dirname, `../client/public/templates/${templateId}/uploads`);
+  
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  const filePath = path.join(uploadsDir, filename);
+
+  try {
+    // Remove header if present (e.g., "data:image/png;base64,")
+    const base64Data = content.replace(/^data:([A-Za-z-+\/]+);base64,/, '');
+    
+    fs.writeFileSync(filePath, base64Data, 'base64');
+    
+    const publicUrl = `/templates/${templateId}/uploads/${filename}`;
+    res.json({ success: true, url: publicUrl });
+  } catch (err) {
+    console.error('Error uploading asset:', err);
+    res.status(500).json({ error: 'Failed to upload asset' });
   }
 });
 

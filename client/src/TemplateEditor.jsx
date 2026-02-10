@@ -1,99 +1,49 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Save, ArrowLeft, Monitor, Smartphone, Tablet, Type, Image, Link as LinkIcon, X } from 'lucide-react';
-import { authFetch } from './config';
+import { 
+  ArrowLeft, Save, Monitor, Smartphone, Tablet, 
+  Image as ImageIcon, Type, Video, FileText, DollarSign,
+  ChevronDown, ChevronRight, Upload
+} from 'lucide-react';
 
 const TemplateEditor = () => {
   const { templateId } = useParams();
   const navigate = useNavigate();
-  const [content, setContent] = useState('');
+  const iframeRef = useRef(null);
+  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [deviceMode, setDeviceMode] = useState('desktop'); // desktop, tablet, mobile
-  const [selectedElement, setSelectedElement] = useState(null);
-  const iframeRef = useRef(null);
+  const [htmlContent, setHtmlContent] = useState('');
+  const [device, setDevice] = useState('desktop'); // desktop, tablet, mobile
+  
+  // State for collapsible sidebar sections
+  const [openSections, setOpenSections] = useState({
+    general: true,
+    tags: false,
+    content: false,
+    media: false,
+    story: false,
+    goal: false
+  });
 
+  // Load Template Content
   useEffect(() => {
-    // Load template content
-    authFetch(`/api/templates/${templateId}/content`)
+    fetch(`http://localhost:3001/api/templates/${templateId}/content`)
       .then(res => res.text())
       .then(html => {
-        // 1. Inject <base> tag for relative paths (CSS/Images)
-        const baseUrl = `${window.location.origin}/templates/${templateId}/`;
+        // Inject Base URL for relative paths
+        const baseUrl = `http://localhost:3001/templates/${templateId}/`;
         let processedHtml = html;
         
-        if (processedHtml.includes('<head>')) {
-          processedHtml = processedHtml.replace('<head>', `<head><base href="${baseUrl}">`);
-        } else {
-          processedHtml = `<base href="${baseUrl}">` + processedHtml;
+        if (!processedHtml.includes('<base')) {
+          if (processedHtml.includes('<head>')) {
+            processedHtml = processedHtml.replace('<head>', `<head><base href="${baseUrl}">`);
+          } else {
+            processedHtml = `<base href="${baseUrl}">` + processedHtml;
+          }
         }
-
-        // 2. Inject editor script and styles
-        const editorScript = `
-          <style>
-            .editor-highlight {
-              outline: 2px solid #006fee !important;
-              cursor: pointer !important;
-            }
-            .editor-selected {
-              outline: 2px solid #f59e0b !important;
-            }
-            body {
-              padding-bottom: 50px; 
-            }
-          </style>
-          <script>
-            let selectedEl = null;
-
-            document.addEventListener('mouseover', (e) => {
-              e.target.classList.add('editor-highlight');
-            });
-
-            document.addEventListener('mouseout', (e) => {
-              e.target.classList.remove('editor-highlight');
-            });
-
-            document.addEventListener('click', (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              
-              if (selectedEl) selectedEl.classList.remove('editor-selected');
-              selectedEl = e.target;
-              selectedEl.classList.add('editor-selected');
-
-              // Identify element type and properties
-              const data = {
-                tagName: selectedEl.tagName,
-                innerHTML: selectedEl.innerHTML,
-                innerText: selectedEl.innerText,
-                src: selectedEl.getAttribute('src'),
-                href: selectedEl.getAttribute('href'),
-                style: selectedEl.getAttribute('style') || '',
-                className: selectedEl.className
-              };
-
-              window.parent.postMessage({ type: 'ELEMENT_SELECTED', data }, '*');
-            });
-
-            window.addEventListener('message', (event) => {
-              if (event.data.type === 'UPDATE_ELEMENT' && selectedEl) {
-                const { key, value } = event.data;
-                if (key === 'innerHTML') selectedEl.innerHTML = value;
-                if (key === 'innerText') selectedEl.innerText = value;
-                if (key === 'src') selectedEl.setAttribute('src', value);
-                if (key === 'href') selectedEl.setAttribute('href', value);
-                if (key === 'style') selectedEl.setAttribute('style', value);
-              }
-            });
-          </script>
-        `;
         
-        // Insert script before closing body tag, or at the end if no body tag
-        if (processedHtml.includes('</body>')) {
-          setContent(processedHtml.replace('</body>', `${editorScript}</body>`));
-        } else {
-          setContent(processedHtml + editorScript);
-        }
+        setHtmlContent(processedHtml);
         setLoading(false);
       })
       .catch(err => {
@@ -102,222 +52,463 @@ const TemplateEditor = () => {
       });
   }, [templateId]);
 
-  // Handle messages from iframe
-  useEffect(() => {
-    const handler = (event) => {
-      if (event.data.type === 'ELEMENT_SELECTED') {
-        setSelectedElement(event.data.data);
-      }
-    };
-    window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
-  }, []);
+  // Helper to toggle sections
+  const toggleSection = (section) => {
+    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
 
-  const handleUpdate = (key, value) => {
-    setSelectedElement(prev => ({ ...prev, [key]: value }));
-    if (iframeRef.current) {
-      iframeRef.current.contentWindow.postMessage({ 
-        type: 'UPDATE_ELEMENT', 
-        key, 
-        value 
-      }, '*');
-    }
+  // Helper to update Iframe DOM
+  const updateDom = (selectors, value, attribute = 'innerText', transform = null) => {
+    if (!iframeRef.current || !iframeRef.current.contentDocument) return;
+    
+    const doc = iframeRef.current.contentDocument;
+    const targetSelectors = Array.isArray(selectors) ? selectors : [selectors];
+    
+    targetSelectors.forEach(selector => {
+      const elements = doc.querySelectorAll(selector);
+      elements.forEach(el => {
+        const finalValue = transform ? transform(value) : value;
+        
+        if (attribute === 'style.width') {
+          el.style.width = finalValue;
+        } else if (attribute === 'src') {
+          el.src = finalValue;
+        } else if (attribute === 'innerHTML') {
+          el.innerHTML = finalValue;
+        } else {
+          el.innerText = finalValue;
+        }
+      });
+    });
+  };
+
+  // File Upload Handler
+  const handleFileUpload = async (e, selectors, attribute) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Show local preview immediately
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target.result;
+      updateDom(selectors, base64, attribute);
+      
+      // Upload to server to persist
+      uploadAsset(file).then(url => {
+         // Update with real URL after upload
+         if (url) {
+             // Prefix with full server URL if needed, or relative if base tag handles it
+             // Since base tag is http://localhost:3001/templates/id/, returning "uploads/file.png" is good.
+             // But our API returns "/templates/id/uploads/file.png".
+             // We should probably use the full URL to be safe or relative to base.
+             // Let's use the full absolute URL from the server.
+             const fullUrl = `http://localhost:3001${url}`;
+             updateDom(selectors, fullUrl, attribute);
+         }
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const uploadAsset = async (file) => {
+    const reader = new FileReader();
+    return new Promise((resolve) => {
+      reader.onload = async (e) => {
+        try {
+          const res = await fetch(`http://localhost:3001/api/templates/${templateId}/assets`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              filename: file.name,
+              content: e.target.result
+            })
+          });
+          const data = await res.json();
+          if (data.success) resolve(data.url);
+          else resolve(null);
+        } catch (err) {
+          console.error(err);
+          resolve(null);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleSave = async () => {
     setSaving(true);
-    // Get current HTML from iframe
-    // Note: We can't easily get the *exact* original source with just innerHTML changes 
-    // because the iframe DOM has been parsed. 
-    // A robust solution would parse the original string, but for this MVP, 
-    // we will ask the iframe for its full HTML and strip our editor scripts.
+    if (!iframeRef.current || !iframeRef.current.contentDocument) return;
+
+    // Get the current HTML state
+    let fullHtml = iframeRef.current.contentDocument.documentElement.outerHTML;
     
-    // Actually, getting documentElement.outerHTML from iframe is best.
-    const fullHtml = iframeRef.current.contentDocument.documentElement.outerHTML;
-    
-    // Clean up our injected scripts/styles
-    // This is a bit hacky but works for MVP. 
-    // We should ideally keep the original "clean" HTML in memory and apply operation transforms,
-    // but direct DOM dump is acceptable for "Total Customization" of static files.
-    
-    // Removing the injected script block is tricky with regex. 
-    // Let's just try to save as is, but users might see the script if they download it.
-    // Better: Send a message to iframe to ask it to clean itself before dumping?
-    // Or just regex replace the specific script block we added.
-    
-    // Simple regex to remove our specific style/script block
-    const cleanHtml = fullHtml
-      .replace(/<base href=".*?">/, '') // Remove injected base tag
-      .replace(/<style>\s*\.editor-highlight[\s\S]*?<\/script>/, '')
-      .replace('class="editor-selected"', '')
-      .replace('class="editor-highlight"', ''); // Cleanup artifacts
+    // Remove the injected <base> tag to preserve portability
+    fullHtml = fullHtml.replace(/<base href="[^"]*">/, '');
 
     try {
-      await authFetch(`/api/templates/${templateId}/content`, {
+      await fetch(`http://localhost:3001/api/templates/${templateId}/content`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: '<!DOCTYPE html>\n' + cleanHtml })
+        body: JSON.stringify({ content: fullHtml })
       });
-      alert('Salvo com sucesso!');
+      alert('Site salvo com sucesso!');
     } catch (err) {
-      console.error('Failed to save:', err);
-      alert('Erro ao salvar.');
+      console.error(err);
+      alert('Erro ao salvar site.');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center h-screen bg-black text-white">Carregando editor...</div>;
+  if (loading) return <div className="flex items-center justify-center h-screen bg-slate-900 text-white">Carregando Editor...</div>;
 
   return (
-    <div className="flex flex-col h-screen bg-neutral-900 text-white overflow-hidden">
-      {/* Top Bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800 bg-black">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/builder')} className="p-2 hover:bg-neutral-800 rounded-full transition">
-            <ArrowLeft size={20} />
-          </button>
-          <h1 className="font-bold text-lg">Editor: {templateId}</h1>
+    <div className="flex h-screen bg-slate-900 overflow-hidden font-sans">
+      {/* Sidebar Editor */}
+      <div className="w-[400px] flex-shrink-0 bg-white border-r border-slate-200 flex flex-col h-full z-10 shadow-xl">
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-slate-100 rounded-full text-slate-600">
+              <ArrowLeft size={20} />
+            </button>
+            <h2 className="font-bold text-slate-800 text-lg">Editor do Site</h2>
+          </div>
         </div>
 
-        <div className="flex bg-neutral-800 rounded-lg p-1">
-          <button 
-            onClick={() => setDeviceMode('desktop')}
-            className={`p-2 rounded ${deviceMode === 'desktop' ? 'bg-neutral-600' : 'hover:bg-neutral-700'}`}
-          >
-            <Monitor size={18} />
-          </button>
-          <button 
-            onClick={() => setDeviceMode('tablet')}
-            className={`p-2 rounded ${deviceMode === 'tablet' ? 'bg-neutral-600' : 'hover:bg-neutral-700'}`}
-          >
-            <Tablet size={18} />
-          </button>
-          <button 
-            onClick={() => setDeviceMode('mobile')}
-            className={`p-2 rounded ${deviceMode === 'mobile' ? 'bg-neutral-600' : 'hover:bg-neutral-700'}`}
-          >
-            <Smartphone size={18} />
-          </button>
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          
+          {/* Section: Logo */}
+          <div className="border-b border-slate-100">
+            <button 
+              onClick={() => toggleSection('general')}
+              className="w-full px-5 py-4 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors"
+            >
+              <span className="font-semibold text-slate-700 flex items-center gap-2">
+                <ImageIcon size={18} className="text-blue-500" />
+                Logo e Identidade
+              </span>
+              {openSections.general ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+            
+            {openSections.general && (
+              <div className="p-5 space-y-4 bg-white animate-fadeIn">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Logo do Site</label>
+                  <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:bg-slate-50 transition-colors relative group cursor-pointer">
+                    <input 
+                      type="file" 
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={(e) => handleFileUpload(e, ['.logo', '.logo-info', '.about-logo'], 'src')}
+                      accept="image/*"
+                    />
+                    <div className="flex flex-col items-center gap-2 text-slate-400 group-hover:text-blue-500">
+                      <Upload size={24} />
+                      <span className="text-sm font-medium">Clique para trocar a Logo</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-400">Recomendado: PNG Transparente</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section: Top Tags */}
+          <div className="border-b border-slate-100">
+            <button 
+              onClick={() => toggleSection('tags')}
+              className="w-full px-5 py-4 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors"
+            >
+              <span className="font-semibold text-slate-700 flex items-center gap-2">
+                <Type size={18} className="text-indigo-500" />
+                Tags de Informação (Topo)
+              </span>
+              {openSections.tags ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+            
+            {openSections.tags && (
+              <div className="p-5 space-y-4 bg-white animate-fadeIn">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Tag 1 (Esquerda)</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-2 border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm"
+                    placeholder="Ex: Asas De Anjo"
+                    onChange={(e) => updateDom('.tag-item:nth-child(1) span', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Tag 2 (Meio)</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-2 border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm"
+                    placeholder="Ex: Refeição"
+                    onChange={(e) => updateDom('.tag-item:nth-child(2) span', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Tag 3 (Direita)</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-2 border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm"
+                    placeholder="Ex: Saúde"
+                    onChange={(e) => updateDom('.tag-item:nth-child(3) span', e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section: Main Content */}
+          <div className="border-b border-slate-100">
+            <button 
+              onClick={() => toggleSection('content')}
+              className="w-full px-5 py-4 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors"
+            >
+              <span className="font-semibold text-slate-700 flex items-center gap-2">
+                <FileText size={18} className="text-green-500" />
+                Texto Principal
+              </span>
+              {openSections.content ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+            
+            {openSections.content && (
+              <div className="p-5 space-y-4 bg-white animate-fadeIn">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Título Principal (H1)</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-2 border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm"
+                    placeholder="Título da Página"
+                    onChange={(e) => updateDom('.titulo-principal', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Subtítulo (HTML permitido)</label>
+                  <textarea 
+                    className="w-full p-2 border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm min-h-[80px]"
+                    placeholder="Subtítulo..."
+                    onChange={(e) => updateDom('.subtitulo', e.target.value, 'innerHTML')}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section: Media */}
+          <div className="border-b border-slate-100">
+            <button 
+              onClick={() => toggleSection('media')}
+              className="w-full px-5 py-4 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors"
+            >
+              <span className="font-semibold text-slate-700 flex items-center gap-2">
+                <Video size={18} className="text-red-500" />
+                Mídia Principal
+              </span>
+              {openSections.media ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+            
+            {openSections.media && (
+              <div className="p-5 space-y-4 bg-white animate-fadeIn">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Subir Vídeo ou Imagem</label>
+                  <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:bg-slate-50 transition-colors relative group cursor-pointer">
+                    <input 
+                      type="file" 
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={(e) => handleFileUpload(e, 'video.imagem-video', 'src')}
+                      accept="video/*,image/*"
+                    />
+                    <div className="flex flex-col items-center gap-2 text-slate-400 group-hover:text-blue-500">
+                      <Upload size={24} />
+                      <span className="text-sm font-medium">Trocar Mídia Principal</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2 pt-4 border-t border-slate-100">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Descrição Curta 1</label>
+                  <textarea 
+                    className="w-full p-2 border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm"
+                    onChange={(e) => updateDom('.texto-info p:not(.texto-azul)', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Descrição Curta 2 (Destaque Azul)</label>
+                  <textarea 
+                    className="w-full p-2 border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm"
+                    onChange={(e) => updateDom('.texto-info .texto-azul', e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section: Story */}
+          <div className="border-b border-slate-100">
+            <button 
+              onClick={() => toggleSection('story')}
+              className="w-full px-5 py-4 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors"
+            >
+              <span className="font-semibold text-slate-700 flex items-center gap-2">
+                <FileText size={18} className="text-orange-500" />
+                História
+              </span>
+              {openSections.story ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+            
+            {openSections.story && (
+              <div className="p-5 space-y-4 bg-white animate-fadeIn">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Conteúdo da História (HTML)</label>
+                  <textarea 
+                    className="w-full p-2 border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm font-mono text-xs min-h-[200px]"
+                    placeholder="<p>Escreva a história aqui...</p>"
+                    onChange={(e) => updateDom('#story', e.target.value, 'innerHTML')}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section: Goal */}
+          <div className="border-b border-slate-100">
+            <button 
+              onClick={() => toggleSection('goal')}
+              className="w-full px-5 py-4 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors"
+            >
+              <span className="font-semibold text-slate-700 flex items-center gap-2">
+                <DollarSign size={18} className="text-emerald-500" />
+                Meta de Arrecadação
+              </span>
+              {openSections.goal ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+            
+            {openSections.goal && (
+              <div className="p-5 space-y-4 bg-white animate-fadeIn">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Valor Arrecadado (Texto)</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-2 border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm"
+                    placeholder="Ex: 45.750€ ANGARIADO"
+                    onChange={(e) => updateDom('.raised-amount', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Texto da Meta</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-2 border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm"
+                    placeholder="Ex: De 230.000,00€ META"
+                    onChange={(e) => updateDom('.goal-text', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Progresso da Barra (%)</label>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                    onChange={(e) => updateDom('.progress-bar-fill', e.target.value + '%', 'style.width')}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="p-8 text-center text-slate-400 text-sm">
+             Fim das configurações
+          </div>
+
         </div>
 
-        <button 
-          onClick={handleSave} 
-          disabled={saving}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-medium transition disabled:opacity-50"
-        >
-          <Save size={18} />
-          {saving ? 'Salvando...' : 'Salvar Alterações'}
-        </button>
+        {/* Footer Actions */}
+        <div className="p-4 border-t border-slate-200 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+           <div className="mb-4">
+              <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Salvar Como</label>
+              <input 
+                type="text" 
+                placeholder="index.html" 
+                disabled
+                className="w-full p-2 bg-slate-100 border border-slate-200 rounded text-slate-500 text-sm cursor-not-allowed" 
+                value="index.html (Padrão)"
+              />
+           </div>
+           <button 
+             onClick={handleSave}
+             disabled={saving}
+             className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-all transform active:scale-95 shadow-lg shadow-green-600/20"
+           >
+             {saving ? 'Salvando...' : (
+               <>
+                 <Save size={20} />
+                 Salvar Alterações
+               </>
+             )}
+           </button>
+        </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Main Canvas */}
-        <div className="flex-1 bg-neutral-900 flex justify-center items-start p-8 overflow-auto" onClick={() => setSelectedElement(null)}>
-          <div 
-            style={{
-              width: deviceMode === 'mobile' ? '375px' : deviceMode === 'tablet' ? '768px' : '100%',
-              height: '100%',
-              transition: 'width 0.3s ease',
-              backgroundColor: 'white',
-              boxShadow: '0 0 40px rgba(0,0,0,0.5)'
-            }}
-          >
-            <iframe 
-              ref={iframeRef}
-              srcDoc={content}
-              title="Template Preview"
-              style={{ width: '100%', height: '100%', border: 'none' }}
-              sandbox="allow-same-origin allow-scripts allow-modals allow-forms allow-popups"
-            />
+      {/* Main Preview Area */}
+      <div className="flex-1 flex flex-col min-w-0 bg-slate-900">
+        {/* Toolbar */}
+        <div className="h-16 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-6 shadow-md z-10">
+          <div className="flex items-center gap-4">
+             <div className="text-white font-medium opacity-80">Preview: {templateId}</div>
           </div>
+          
+          <div className="flex bg-slate-700 rounded-lg p-1">
+             <button 
+               onClick={() => setDevice('desktop')}
+               className={`p-2 rounded-md transition-all ${device === 'desktop' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-600'}`}
+               title="Desktop"
+             >
+               <Monitor size={20} />
+             </button>
+             <button 
+               onClick={() => setDevice('tablet')}
+               className={`p-2 rounded-md transition-all ${device === 'tablet' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-600'}`}
+               title="Tablet"
+             >
+               <Tablet size={20} />
+             </button>
+             <button 
+               onClick={() => setDevice('mobile')}
+               className={`p-2 rounded-md transition-all ${device === 'mobile' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-600'}`}
+               title="Mobile"
+             >
+               <Smartphone size={20} />
+             </button>
+          </div>
+
+          <div className="w-[100px]"></div> {/* Spacer for balance */}
         </div>
 
-        {/* Properties Sidebar */}
-        {selectedElement && (
-          <div className="w-80 bg-black border-l border-neutral-800 p-4 overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="font-bold text-lg flex items-center gap-2">
-                <Type size={18} className="text-blue-500" />
-                Propriedades
-              </h2>
-              <button onClick={() => setSelectedElement(null)} className="hover:text-red-500">
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              <div className="text-xs text-neutral-500 font-mono mb-4 p-2 bg-neutral-900 rounded">
-                &lt;{selectedElement.tagName.toLowerCase()} class="{selectedElement.className}"&gt;
-              </div>
-
-              {/* Text Content Editor */}
-              {(selectedElement.innerText !== undefined) && (
-                <div className="space-y-2">
-                  <label className="text-sm text-neutral-400">Texto</label>
-                  <textarea 
-                    value={selectedElement.innerText}
-                    onChange={(e) => handleUpdate('innerText', e.target.value)}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded p-2 text-sm h-32 focus:border-blue-500 outline-none"
-                  />
-                </div>
+        {/* Iframe Container */}
+        <div className="flex-1 overflow-hidden relative flex items-center justify-center p-8 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-800 to-slate-950">
+           <div 
+             className={`transition-all duration-500 ease-in-out bg-white shadow-2xl overflow-hidden border-8 border-slate-800 relative ${
+               device === 'mobile' ? 'w-[375px] h-[667px] rounded-[30px]' : 
+               device === 'tablet' ? 'w-[768px] h-[1024px] rounded-[20px]' : 
+               'w-full h-full rounded-none border-0'
+             }`}
+           >
+              {/* Mobile Notch simulation */}
+              {(device === 'mobile' || device === 'tablet') && (
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-6 bg-slate-800 rounded-b-xl z-20"></div>
               )}
 
-               {/* HTML Content Editor (Advanced) */}
-               <div className="space-y-2">
-                  <label className="text-sm text-neutral-400">HTML (Avançado)</label>
-                  <textarea 
-                    value={selectedElement.innerHTML}
-                    onChange={(e) => handleUpdate('innerHTML', e.target.value)}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded p-2 text-xs h-32 font-mono focus:border-blue-500 outline-none"
-                  />
-                </div>
-
-              {/* Image Src Editor */}
-              {selectedElement.tagName === 'IMG' && (
-                <div className="space-y-2">
-                  <label className="text-sm text-neutral-400 flex items-center gap-2">
-                    <Image size={14} /> Origem da Imagem (SRC)
-                  </label>
-                  <input 
-                    type="text" 
-                    value={selectedElement.src || ''}
-                    onChange={(e) => handleUpdate('src', e.target.value)}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded p-2 text-sm focus:border-blue-500 outline-none"
-                  />
-                  <p className="text-xs text-neutral-600">Cole uma URL ou caminho relativo (ex: images/foto.jpg)</p>
-                </div>
-              )}
-
-              {/* Link Href Editor */}
-              {selectedElement.tagName === 'A' && (
-                <div className="space-y-2">
-                  <label className="text-sm text-neutral-400 flex items-center gap-2">
-                    <LinkIcon size={14} /> Link (HREF)
-                  </label>
-                  <input 
-                    type="text" 
-                    value={selectedElement.href || ''}
-                    onChange={(e) => handleUpdate('href', e.target.value)}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded p-2 text-sm focus:border-blue-500 outline-none"
-                  />
-                </div>
-              )}
-
-               {/* Style Editor */}
-               <div className="space-y-2">
-                  <label className="text-sm text-neutral-400">Estilo CSS (Inline)</label>
-                  <textarea 
-                    value={selectedElement.style || ''}
-                    onChange={(e) => handleUpdate('style', e.target.value)}
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded p-2 text-xs h-24 font-mono focus:border-blue-500 outline-none"
-                    placeholder="color: red; font-size: 20px;"
-                  />
-                </div>
-
-            </div>
-          </div>
-        )}
+              <iframe
+                ref={iframeRef}
+                srcDoc={htmlContent}
+                title="Site Preview"
+                className="w-full h-full bg-white"
+                sandbox="allow-same-origin allow-scripts allow-forms"
+                style={{ border: 'none' }}
+              />
+           </div>
+        </div>
       </div>
     </div>
   );
