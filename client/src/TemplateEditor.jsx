@@ -18,7 +18,17 @@ const TemplateEditor = () => {
     authFetch(`/api/templates/${templateId}/content`)
       .then(res => res.text())
       .then(html => {
-        // Inject editor script and styles
+        // 1. Inject <base> tag for relative paths (CSS/Images)
+        const baseUrl = `${window.location.origin}/templates/${templateId}/`;
+        let processedHtml = html;
+        
+        if (processedHtml.includes('<head>')) {
+          processedHtml = processedHtml.replace('<head>', `<head><base href="${baseUrl}">`);
+        } else {
+          processedHtml = `<base href="${baseUrl}">` + processedHtml;
+        }
+
+        // 2. Inject editor script and styles
         const editorScript = `
           <style>
             .editor-highlight {
@@ -79,10 +89,10 @@ const TemplateEditor = () => {
         `;
         
         // Insert script before closing body tag, or at the end if no body tag
-        if (html.includes('</body>')) {
-          setContent(html.replace('</body>', `${editorScript}</body>`));
+        if (processedHtml.includes('</body>')) {
+          setContent(processedHtml.replace('</body>', `${editorScript}</body>`));
         } else {
-          setContent(html + editorScript);
+          setContent(processedHtml + editorScript);
         }
         setLoading(false);
       })
@@ -137,6 +147,7 @@ const TemplateEditor = () => {
     
     // Simple regex to remove our specific style/script block
     const cleanHtml = fullHtml
+      .replace(/<base href=".*?">/, '') // Remove injected base tag
       .replace(/<style>\s*\.editor-highlight[\s\S]*?<\/script>/, '')
       .replace('class="editor-selected"', '')
       .replace('class="editor-highlight"', ''); // Cleanup artifacts
